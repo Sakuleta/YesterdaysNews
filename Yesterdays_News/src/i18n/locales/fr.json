@@ -1,0 +1,24 @@
+{
+  "app.title": "Les Nouvelles d'Hier",
+  "app.subtitle": "La Chronique Historique",
+  "date.sunny": "Ensoleillé",
+  "date.storiesToday": "{{count}} Histoires Aujourd'hui",
+  "date.loading": "Chargement...",
+  "loading.message": "Chargement des événements historiques...",
+  "loading.status": "Recherche dans l'histoire...",
+  "error.defaultTitle": "Oups ! Une erreur est survenue",
+  "error.networkTitle": "Pas de connexion Internet",
+  "error.emptyTitle": "Aucun événement trouvé",
+  "error.tryAgain": "Réessayer",
+  "error.inlineRetry": "Réessayer",
+  "error.tips": "Vérifiez votre connexion Internet\nAssurez-vous d'être connecté au WiFi ou aux données mobiles\nRéessayez dans un instant",
+  "empty.tip": "Essayez une autre date ou revenez demain pour de nouveaux événements !",
+  "card.readMore": "Lire la suite",
+  "modal.calendar": "Calendrier",
+  "modal.by": "Rédaction de la Chronique Historique",
+  "modal.originally": "Survenu à l'origine : {{year}}",
+  "modal.related": "Sources liées",
+  "modal.openWarning": "Ce lien ne peut pas être ouvert pour des raisons de sécurité.",
+  "generic.refresh": "Actualiser"
+}
+

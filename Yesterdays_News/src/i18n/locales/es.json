@@ -1,0 +1,24 @@
+{
+  "app.title": "Noticias de Ayer",
+  "app.subtitle": "La Crónica Histórica",
+  "date.sunny": "Soleado",
+  "date.storiesToday": "{{count}} Historias Hoy",
+  "date.loading": "Cargando...",
+  "loading.message": "Cargando eventos históricos...",
+  "loading.status": "Buscando en la historia...",
+  "error.defaultTitle": "¡Vaya! Algo salió mal",
+  "error.networkTitle": "Sin conexión a Internet",
+  "error.emptyTitle": "No se encontraron eventos",
+  "error.tryAgain": "Intentar de nuevo",
+  "error.inlineRetry": "Reintentar",
+  "error.tips": "Comprueba tu conexión a Internet\nAsegúrate de estar conectado a WiFi o datos móviles\nInténtalo de nuevo en un momento",
+  "empty.tip": "¡Prueba otra fecha o vuelve mañana para nuevos eventos!",
+  "card.readMore": "Leer más",
+  "modal.calendar": "Calendario",
+  "modal.by": "Redacción de la Crónica Histórica",
+  "modal.originally": "Ocurrió originalmente: {{year}}",
+  "modal.related": "Fuentes relacionadas",
+  "modal.openWarning": "Este enlace no puede abrirse por razones de seguridad.",
+  "generic.refresh": "Actualizar"
+}
+

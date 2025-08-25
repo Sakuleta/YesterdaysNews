@@ -1,0 +1,24 @@
+{
+  "app.title": "Nachrichten von Gestern",
+  "app.subtitle": "Die Historische Chronik",
+  "date.sunny": "Sonnig",
+  "date.storiesToday": "{{count}} Geschichten Heute",
+  "date.loading": "Wird geladen...",
+  "loading.message": "Historische Ereignisse werden geladen...",
+  "loading.status": "In der Geschichte stöbern...",
+  "error.defaultTitle": "Ups! Etwas ist schief gelaufen",
+  "error.networkTitle": "Keine Internetverbindung",
+  "error.emptyTitle": "Keine Ereignisse gefunden",
+  "error.tryAgain": "Erneut versuchen",
+  "error.inlineRetry": "Erneut",
+  "error.tips": "Überprüfen Sie Ihre Internetverbindung\nStellen Sie sicher, dass Sie mit WLAN oder mobilen Daten verbunden sind\nVersuchen Sie es in einem Moment erneut",
+  "empty.tip": "Probieren Sie ein anderes Datum oder kommen Sie morgen wieder!",
+  "card.readMore": "Mehr lesen",
+  "modal.calendar": "Kalender",
+  "modal.by": "Historische Chronik Redaktion",
+  "modal.originally": "Ursprünglich geschehen: {{year}}",
+  "modal.related": "Verwandte Quellen",
+  "modal.openWarning": "Dieser Link kann aus Sicherheitsgründen nicht geöffnet werden.",
+  "generic.refresh": "Aktualisieren"
+}
+

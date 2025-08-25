@@ -1,0 +1,24 @@
+{
+  "app.title": "Notícias de Ontem",
+  "app.subtitle": "A Crônica Histórica",
+  "date.sunny": "Ensolarado",
+  "date.storiesToday": "{{count}} Histórias Hoje",
+  "date.loading": "Carregando...",
+  "loading.message": "Carregando eventos históricos...",
+  "loading.status": "Buscando na história...",
+  "error.defaultTitle": "Ops! Algo deu errado",
+  "error.networkTitle": "Sem conexão com a Internet",
+  "error.emptyTitle": "Nenhum evento encontrado",
+  "error.tryAgain": "Tentar novamente",
+  "error.inlineRetry": "Repetir",
+  "error.tips": "Verifique sua conexão com a Internet\nCertifique-se de estar conectado ao Wi-Fi ou à rede móvel\nTente novamente em instantes",
+  "empty.tip": "Tente outra data ou volte amanhã para novos eventos!",
+  "card.readMore": "Ler mais",
+  "modal.calendar": "Calendário",
+  "modal.by": "Redação da Crônica Histórica",
+  "modal.originally": "Originalmente ocorreu: {{year}}",
+  "modal.related": "Fontes relacionadas",
+  "modal.openWarning": "Este link não pode ser aberto por motivos de segurança.",
+  "generic.refresh": "Atualizar"
+}
+

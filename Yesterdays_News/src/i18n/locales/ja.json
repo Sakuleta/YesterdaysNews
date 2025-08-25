@@ -1,0 +1,24 @@
+{
+  "app.title": "きのうのニュース",
+  "app.subtitle": "歴史クロニクル",
+  "date.sunny": "晴れ",
+  "date.storiesToday": "本日の記事 {{count}} 件",
+  "date.loading": "読み込み中...",
+  "loading.message": "歴史的な出来事を読み込み中...",
+  "loading.status": "歴史を探索中...",
+  "error.defaultTitle": "問題が発生しました",
+  "error.networkTitle": "インターネットに接続されていません",
+  "error.emptyTitle": "イベントが見つかりません",
+  "error.tryAgain": "再試行",
+  "error.inlineRetry": "再試行",
+  "error.tips": "インターネット接続を確認してください\nWiFi またはモバイルデータに接続してください\nしばらくしてからもう一度お試しください",
+  "empty.tip": "別の日付を試すか、明日またお越しください！",
+  "card.readMore": "続きを読む",
+  "modal.calendar": "カレンダー",
+  "modal.by": "歴史クロニクル編集部",
+  "modal.originally": "当初の発生日: {{year}}",
+  "modal.related": "関連ソース",
+  "modal.openWarning": "セキュリティ上の理由によりこのリンクは開けません。",
+  "generic.refresh": "更新"
+}
+

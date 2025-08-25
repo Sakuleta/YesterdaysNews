@@ -1,0 +1,24 @@
+{
+  "app.title": "Dünün Haberleri",
+  "app.subtitle": "Tarihî Kronik",
+  "date.sunny": "Güneşli",
+  "date.storiesToday": "Bugün {{count}} Haber",
+  "date.loading": "Yükleniyor...",
+  "loading.message": "Tarihî olaylar yükleniyor...",
+  "loading.status": "Tarih sayfalarında arıyor...",
+  "error.defaultTitle": "Bir şeyler ters gitti",
+  "error.networkTitle": "İnternet bağlantısı yok",
+  "error.emptyTitle": "Olay bulunamadı",
+  "error.tryAgain": "Tekrar Dene",
+  "error.inlineRetry": "Yenile",
+  "error.tips": "İnternet bağlantınızı kontrol edin\nWiFi veya mobil veriye bağlı olduğunuzdan emin olun\nBirazdan tekrar deneyin",
+  "empty.tip": "Başka bir tarihi deneyin veya yarın tekrar gelin!",
+  "card.readMore": "Devamını Oku",
+  "modal.calendar": "Takvim",
+  "modal.by": "Tarihî Kronik Masası",
+  "modal.originally": "Aslen: {{year}}",
+  "modal.related": "İlgili Kaynaklar",
+  "modal.openWarning": "Güvenlik nedeniyle bu bağlantı açılamıyor.",
+  "generic.refresh": "Yenile"
+}
+

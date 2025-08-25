@@ -1,0 +1,24 @@
+{
+  "app.title": "Le Notizie di Ieri",
+  "app.subtitle": "La Cronaca Storica",
+  "date.sunny": "Soleggiato",
+  "date.storiesToday": "{{count}} Storie Oggi",
+  "date.loading": "Caricamento...",
+  "loading.message": "Caricamento degli eventi storici...",
+  "loading.status": "Cercando nella storia...",
+  "error.defaultTitle": "Ops! Qualcosa è andato storto",
+  "error.networkTitle": "Nessuna connessione Internet",
+  "error.emptyTitle": "Nessun evento trovato",
+  "error.tryAgain": "Riprova",
+  "error.inlineRetry": "Riprova",
+  "error.tips": "Controlla la tua connessione Internet\nAssicurati di essere connesso al WiFi o ai dati mobili\nRiprova tra un momento",
+  "empty.tip": "Prova un'altra data o torna domani per nuovi eventi!",
+  "card.readMore": "Leggi di più",
+  "modal.calendar": "Calendario",
+  "modal.by": "Redazione della Cronaca Storica",
+  "modal.originally": "Avvenuto originariamente: {{year}}",
+  "modal.related": "Fonti correlate",
+  "modal.openWarning": "Questo link non può essere aperto per motivi di sicurezza.",
+  "generic.refresh": "Aggiorna"
+}
+

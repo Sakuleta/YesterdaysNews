@@ -1,0 +1,24 @@
+{
+  "app.title": "Yesterday's News",
+  "app.subtitle": "The Historical Chronicle",
+  "date.sunny": "Sunny",
+  "date.storiesToday": "{{count}} Stories Today",
+  "date.loading": "Loading...",
+  "loading.message": "Loading historical events...",
+  "loading.status": "Searching through history...",
+  "error.defaultTitle": "Oops! Something went wrong",
+  "error.networkTitle": "No Internet Connection",
+  "error.emptyTitle": "No Events Found",
+  "error.tryAgain": "Try Again",
+  "error.inlineRetry": "Retry",
+  "error.tips": "Check your internet connection\nMake sure you're connected to WiFi or mobile data\nTry again in a moment",
+  "empty.tip": "Try checking another date or come back tomorrow for new historical events!",
+  "card.readMore": "Read More",
+  "modal.calendar": "Calendar",
+  "modal.by": "Historical Chronicle Desk",
+  "modal.originally": "Originally occurred: {{year}}",
+  "modal.related": "Related Sources",
+  "modal.openWarning": "This link cannot be opened for security reasons.",
+  "generic.refresh": "Refresh"
+}
+
