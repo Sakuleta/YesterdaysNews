@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
 
 // Avoid pulling in expo-location via DateHeader -> WeatherService in tests
 jest.mock('../src/services/WeatherService', () => ({
-  getCurrentWeather: jest.fn().mockResolvedValue({ icon: 'weather-sunny', label: 'Sunny' }),
+  getCurrentWeather: jest.fn().mockResolvedValue({ icon: 'weather-sunny', translationKey: 'weather.sunny' }),
 }));
 
 jest.mock('../src/services/HistoricalEventsAPI', () => ({

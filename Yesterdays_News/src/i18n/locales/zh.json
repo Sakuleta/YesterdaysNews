@@ -18,6 +18,8 @@
   "modal.by": "历史编年编辑部",
   "modal.originally": "最初发生于：{{year}}",
   "modal.related": "相关来源",
+  "modal.noRelatedSources": "此事件没有相关来源。",
+  "modal.noRelatedSourcesForSource": "{{source}}没有相关来源。",
   "modal.openWarning": "出于安全原因无法打开此链接。",
   "generic.refresh": "刷新"
 }

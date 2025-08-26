@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import NewspaperMasthead from '../components/NewspaperMasthead';
 import DateHeader from '../components/DateHeader';
 import EventCard from '../components/EventCard';
-import MagnifyingGlassModal from '../components/MagnifyingGlassModal';
+// Lazy-load heavy modal on demand to reduce initial bundle size
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -22,6 +22,7 @@ import HistoricalEventsAPI from '../services/HistoricalEventsAPI';
 // Utils
 import { COLORS, SPACING } from '../utils/constants';
 import { formatErrorMessage } from '../utils/helpers';
+import PerformanceMonitor from '../utils/PerformanceMonitor';
 
 /**
  * HomeScreen Component - Vintage Edition
@@ -38,6 +39,7 @@ const HomeScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [languageChanging, setLanguageChanging] = useState(false);
+  const [MagnifyingGlassModal, setMagnifyingGlassModal] = useState(null);
 
   const langDebounceRef = useRef(null);
 
@@ -55,6 +57,11 @@ const HomeScreen = () => {
         : await HistoricalEventsAPI.getEventsForToday();
         
       setEvents(eventsData);
+      
+      // Record app fully loaded
+      if (!isRefresh) {
+        PerformanceMonitor.recordAppLoaded();
+      }
       
       if (eventsData.length === 0) {
         setError({
@@ -89,8 +96,18 @@ const HomeScreen = () => {
    */
   const handleEventPress = useCallback((event) => {
     setSelectedEvent(event);
-    setModalVisible(true);
-  }, []);
+    // Load modal component on first demand, then show
+    if (!MagnifyingGlassModal) {
+      import('../components/MagnifyingGlassModal').then((mod) => {
+        setMagnifyingGlassModal(() => mod.default);
+        setModalVisible(true);
+      }).catch((e) => {
+        console.error('Failed to load MagnifyingGlassModal', e);
+      });
+    } else {
+      setModalVisible(true);
+    }
+  }, [MagnifyingGlassModal]);
 
   /**
    * Close the event detail modal
@@ -103,6 +120,9 @@ const HomeScreen = () => {
 
   // Load events on initial component mount
   useEffect(() => {
+    // Start performance monitoring
+    PerformanceMonitor.startTiming();
+    
     loadEvents();
   }, [loadEvents]);
 
@@ -138,9 +158,9 @@ const HomeScreen = () => {
         setEvents([]); // Clear old events to force refresh
         // Do not trigger load here; effect on i18n.language will handle fetching
       }} />
-      <DateHeader eventsCount={events.length} />
+      <DateHeader eventsCount={events.length} refreshTrigger={refreshing ? Date.now() : 0} />
     </>
-  ), [events.length, loadEvents]);
+  ), [events.length, loadEvents, refreshing]);
 
   const renderListEmpty = useCallback(() => {
     // Show skeleton loading when language is changing
@@ -177,8 +197,12 @@ const HomeScreen = () => {
     return `${lang}-${year}-${baseKey}`;
   }, [i18n.language]);
 
-  const ITEM_HEIGHT = 168; // approximate card height for getItemLayout
-  const getItemLayout = useCallback((_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index }), []);
+  const ITEM_HEIGHT = 180; // Updated card height for better accuracy
+  const getItemLayout = useCallback((_, index) => ({ 
+    length: ITEM_HEIGHT, 
+    offset: ITEM_HEIGHT * index, 
+    index 
+  }), []);
 
   // Prevent unnecessary item re-renders by only updating when relevant fields change
   const shouldItemUpdate = useCallback((prev, next) => {
@@ -193,13 +217,47 @@ const HomeScreen = () => {
     );
   }, []);
 
+  // Footer component for proper spacing at the end
+  const renderListFooter = useCallback(() => (
+    <View style={styles.listFooter} />
+  ), []);
+
+  // FlatList ref for scroll control
+  const flatListRef = useRef(null);
+
   const renderItem = useCallback(({ item }) => (
     <EventCard event={item} onPress={handleEventPress} />
   ), [handleEventPress]);
 
+  // Scroll performance monitoring
+  const handleScrollBeginDrag = useCallback(() => {
+    PerformanceMonitor.recordScrollMetrics({
+      type: 'scroll_begin',
+      duration: 0
+    });
+  }, []);
+
+  const handleScrollEndDrag = useCallback((event) => {
+    PerformanceMonitor.recordScrollMetrics({
+      type: 'scroll_end',
+      duration: Date.now(),
+      velocity: event.nativeEvent.velocity?.y || 0
+    });
+  }, []);
+
+  // Handle scroll momentum end for performance monitoring only
+  const handleMomentumScrollEnd = useCallback((event) => {
+    PerformanceMonitor.recordScrollMetrics({
+      type: 'momentum_end',
+      duration: Date.now(),
+      contentOffset: event.nativeEvent.contentOffset.y
+    });
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
+        ref={flatListRef}
         key={`list-${i18n.language}-${languageChanging ? 'changing' : 'ready'}`}
         data={languageChanging ? [] : events}
         keyExtractor={keyExtractor}
@@ -207,22 +265,32 @@ const HomeScreen = () => {
         shouldItemUpdate={shouldItemUpdate}
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderListEmpty}
+        ListFooterComponent={renderListFooter}
         refreshing={refreshing}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.listContent}
-        removeClippedSubviews
-        windowSize={7}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
+        windowSize={10}
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        updateCellsBatchingPeriod={100}
         getItemLayout={getItemLayout}
+        legacyImplementation={false}
+        disableVirtualization={false}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onScrollEndDrag={handleScrollEndDrag}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        scrollIndicatorInsets={{ right: 1 }}
+        contentInsetAdjustmentBehavior="automatic"
       />
       
-      <MagnifyingGlassModal
-        visible={modalVisible}
-        event={selectedEvent}
-        onClose={handleCloseModal}
-      />
+      {MagnifyingGlassModal ? (
+        <MagnifyingGlassModal
+          visible={modalVisible}
+          event={selectedEvent}
+          onClose={handleCloseModal}
+        />
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -233,7 +301,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   listContent: {
-    paddingBottom: SPACING.lg, // Ensure space at the bottom
+    paddingBottom: 0, // Remove padding since we have footer
+  },
+  listFooter: {
+    height: 50, // decreased space at the end for better fast scroll handling
+    backgroundColor: 'transparent',
   },
 });
 

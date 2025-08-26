@@ -1,0 +1,474 @@
+[
+  {
+    "id": "TC001",
+    "title": "App Launch and Splash Screen Display",
+    "description": "Verify the animated newspaper-themed splash screen with gear animation displays correctly upon app launch without delay.",
+    "category": "ui",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the application on supported platform (iOS, Android, Web)."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the splash screen displays newspaper theme and animated gear without any visual artifacts or delay."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that splash screen disappears after animation completes and main screen loads."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Fetch Current Date Historical Events Successfully",
+    "description": "Validate that the app fetches and displays up-to-date historical events for the current date from Wikipedia's On This Day API on launch.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Clear cache and launch the app with active internet connection."
+      },
+      {
+        "type": "assertion",
+        "description": "Observe and confirm loading indicators (e.g., LoadingSkeleton or LoadingSpinner) during fetch."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the main screen displays a chronological list of historical events with year, title, description, and category icons."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that events correspond to the current date."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Load Events from Cache Offline",
+    "description": "Check that cached historical events are loaded from AsyncStorage if available and not expired, enabling offline usage.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app with internet connection and allow caching of events."
+      },
+      {
+        "type": "action",
+        "description": "Close and disable internet connection."
+      },
+      {
+        "type": "action",
+        "description": "Relaunch the app."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify events display correctly loaded from cache without fetching from network."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm cache expiry logic: data older than 24 hours is not loaded and triggers fresh fetch when online."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Cache Expiry and Automatic Cleanup",
+    "description": "Verify that cached events expire after 24 hours and that outdated cache entries are automatically removed to conserve storage.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Manually set a cache timestamp older than 24 hours."
+      },
+      {
+        "type": "action",
+        "description": "Launch the app with internet connection."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm cache is identified as stale, triggers fresh data fetch."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that stale cache data is deleted or cleaned up from AsyncStorage."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Pull-to-Refresh Functionality",
+    "description": "Ensure that the pull-to-refresh gesture triggers a fresh fetch of events and updates the displayed list accordingly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "On HomeScreen with loaded events, perform pull-to-refresh gesture."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify loading indicators display during refresh."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm events list updates with latest data after refresh completes."
+      },
+      {
+        "type": "assertion",
+        "description": "Check cached data updates with refreshed events."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Language Selector Dynamic Update",
+    "description": "Validate that changing the language via the NewspaperMasthead language selector dynamically updates all text content without requiring app restart, supporting all 11 languages.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the app and change the language to each supported language (English, Spanish, French, German, Italian, Portuguese, Russian, Turkish, Arabic, Japanese, Chinese) via the header selector."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that all UI text, event descriptions, dates, error messages, and component labels dynamically update immediately after language selection."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure no app restart is required to apply language changes."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Event Card Display and Category Icon/Color Coding",
+    "description": "Check that each historical event card shows correct year, title, description, and category icons/colors consistent with design specifications across platforms.",
+    "category": "ui",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app and scroll through the events list."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify each card displays event year, title, and truncated description clearly."
+      },
+      {
+        "type": "assertion",
+        "description": "Check correct category icon is shown with proper color coding corresponding to the event category."
+      },
+      {
+        "type": "assertion",
+        "description": "Repeat verification on iOS, Android, and Web platforms with various screen sizes."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Event Card Tapping Opens MagnifyingGlassModal",
+    "description": "Ensure tapping on any event card opens the detailed MagnifyingGlassModal displaying expanded event information and related links.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Tap on any event card on the HomeScreen event list."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the MagnifyingGlassModal opens with detailed event information, including title, full description, year, and relevant links."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm modal displays magnifying glass theme styling and is dismissible."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Network Error Handling with Retry",
+    "description": "Test that network errors during event fetching are detected and appropriate user-friendly error messages with retry options are shown.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Disable internet connection and launch the app with no cached data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an error message is displayed explaining network failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Check for presence of a retry button or option."
+      },
+      {
+        "type": "action",
+        "description": "Enable internet connection and tap retry button."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the app retries fetching and loads events upon successful connection."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "General Error Handling with User-friendly Messages",
+    "description": "Validate handling and display of general and unexpected errors during data fetching or rendering with clear user-friendly messages and recovery options.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate API returning malformed data or app encountering runtime error during fetch or rendering."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an error message is displayed indicating a general error occurred."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that users are offered retry or fallback options to recover."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Verify Loading States Display Correctly",
+    "description": "Ensure that loading states such as LoadingSkeleton and LoadingSpinner appear appropriately during data fetches and screen transitions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app with slow network connection to observe loading states."
+      },
+      {
+        "type": "assertion",
+        "description": "Check LoadingSkeleton is visible in place of event cards before data renders."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify LoadingSpinner displays when fetching data on pull-to-refresh."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "DateHeader Displays Current Date Correctly",
+    "description": "Verify DateHeader component correctly shows the current date in multiple formats with proper localization.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app and observe the DateHeader display."
+      },
+      {
+        "type": "assertion",
+        "description": "Check the displayed date matches the device's current date and respects locale formatting for the selected language."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Performance - Smooth Scrolling and Lazy Loading",
+    "description": "Confirm that the event list supports smooth scrolling via virtual scrolling and lazy loading without frame drops or high memory usage.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load HomeScreen with a large number of events."
+      },
+      {
+        "type": "action",
+        "description": "Scroll rapidly through the event list vertically."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify scrolling is smooth without jank or delays."
+      },
+      {
+        "type": "assertion",
+        "description": "Check lazy loading triggers loading of additional events without UI freezes."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Cross-Platform UI Responsiveness",
+    "description": "Verify all UI components render correctly and are touch-friendly on iOS, Android, and Web platforms across different screen sizes and orientations.",
+    "category": "ui",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app on supported platforms and devices (phone, tablet, desktop)."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm UI layout adapts correctly with no overflow or clipping."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all interactive elements are accessible and respond to touch or mouse input properly."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "DateUtils Utility Functions Test",
+    "description": "Verify all date formatting and manipulation functions in DateUtils service return correct outputs, handling edge cases like leap years and time zones.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Test DateUtils functions with various input dates including 29th Feb (leap year), end/start of year, and different locales."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the outputs match expected formatted date strings and calculations."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "HistoricalEventsAPI Caching, Rate Limiting, and Circuit Breaker",
+    "description": "Validate that the HistoricalEventsAPI service correctly implements caching, enforces rate limits, and activates circuit breaker during API failures.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Make multiple rapid consecutive fetch requests exceeding rate limit."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify rate limiting is enforced, and extra requests are queued or rejected gracefully."
+      },
+      {
+        "type": "action",
+        "description": "Simulate repeated API failures to trigger circuit breaker."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm circuit breaker activates and prevents further API calls temporarily."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fallback to cache or user-friendly error message during circuit breaker active state."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "WeatherService Integration and Fallback Handling",
+    "description": "Check that current weather is fetched correctly based on device location using Open-Meteo API and fallback or error handling works if location permission is denied.",
+    "category": "functional",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Allow location permission when app requests."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify weather data is fetched and displayed if applicable."
+      },
+      {
+        "type": "action",
+        "description": "Deny location permission on next launch."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm graceful handling of denied permission with fallback content or messages."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "ErrorMessage Component Display for Various Error Types",
+    "description": "Verify that the ErrorMessage component displays appropriate messages and UI for network errors, empty data, and general errors.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate network error during data fetch."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that ErrorMessage shows user-friendly network error message."
+      },
+      {
+        "type": "action",
+        "description": "Simulate empty data response."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify ErrorMessage indicates no data available."
+      },
+      {
+        "type": "action",
+        "description": "Simulate generic failure in component rendering."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm ErrorMessage displays general error notice."
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Animated Gear Component Functionality and Performance",
+    "description": "Ensure that the GearAnimation component performs smooth rotation animation without consuming excessive CPU or memory during splash screen display.",
+    "category": "performance",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch app and focus on splash screen gear animation period."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the gear rotates smoothly with no jank or stutter."
+      },
+      {
+        "type": "assertion",
+        "description": "Monitor performance metrics to assure no significant resource spikes occur."
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Automated Test Coverage for Core Functionalities",
+    "description": "Verify that automated unit tests cover key functionalities including date utilities, API integration, component rendering and error handling as per test suite coverage.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Run the automated jest test suite."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm all core modules including DateUtils, HistoricalEventsAPI, and UI components pass tests."
+      },
+      {
+        "type": "assertion",
+        "description": "Check code coverage reports to ensure adequate coverage thresholds are met."
+      }
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { 
@@ -12,6 +12,7 @@ import {
 import DateUtils from '../services/DateUtils';
 import { truncateText } from '../utils/helpers';
 import { useTranslation } from 'react-i18next';
+import PerformanceMonitor from '../utils/PerformanceMonitor';
 
 /**
  * EventCard Component - Vintage Newspaper Style
@@ -19,6 +20,8 @@ import { useTranslation } from 'react-i18next';
  */
 const EventCard = ({ event, onPress }) => {
   const { t } = useTranslation();
+  const renderStartTime = useRef(Date.now());
+  
   const {
     year,
     title,
@@ -28,6 +31,12 @@ const EventCard = ({ event, onPress }) => {
 
   const formattedYear = DateUtils.formatYear(year);
   const categoryIcon = CATEGORY_ICONS[category] || CATEGORY_ICONS.event;
+
+  // Track render performance
+  useEffect(() => {
+    const renderTime = Date.now() - renderStartTime.current;
+    PerformanceMonitor.recordRenderTime('EventCard', renderTime);
+  }, []);
   const categoryColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.event;
 
   return (
@@ -35,6 +44,10 @@ const EventCard = ({ event, onPress }) => {
       style={styles.container}
       onPress={() => onPress(event)}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={`${t('card.readMore')} ${title}`}
+      accessibilityHint={`${t('card.readMore')} ${formattedYear} ${category} event`}
     >
       <View style={styles.header}>
         <View style={styles.categoryContainer}>

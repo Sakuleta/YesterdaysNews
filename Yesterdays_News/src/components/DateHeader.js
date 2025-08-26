@@ -11,7 +11,7 @@ import { getCurrentWeather } from '../services/WeatherService';
  * DateHeader Component - Vintage Newspaper Style
  * Displays the current date in a classic newspaper format.
  */
-const DateHeader = ({ eventsCount = 0 }) => {
+const DateHeader = ({ eventsCount = 0, refreshTrigger = 0 }) => {
   const { t, i18n } = useTranslation();
   
   // Set moment locale based on current app language
@@ -20,34 +20,62 @@ const DateHeader = ({ eventsCount = 0 }) => {
   const currentDate = moment().format('MMMM D, YYYY');
   const dayOfWeek = moment().format('dddd');
 
-  const [weather, setWeather] = useState({ icon: 'weather-cloudy', label: t('date.loading') });
+  const [weather, setWeather] = useState({ icon: 'weather-cloudy', translationKey: 'weather.overcast' });
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const result = await getCurrentWeather(i18n.language);
+      // Use forceRefresh when refreshTrigger changes (pull-to-refresh)
+      const result = await getCurrentWeather(refreshTrigger > 0);
       if (isMounted && result) {
         setWeather({
           icon: result.icon || 'weather-cloudy',
-          label: result.label || t('date.sunny'),
+          translationKey: result.translationKey || 'weather.overcast',
         });
       }
     })();
     return () => { isMounted = false; };
-  }, [i18n.language]);
+  }, [refreshTrigger]);
 
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container}
+      accessible={true}
+      accessibilityRole="header"
+      accessibilityLabel={`${dayOfWeek}, ${currentDate}`}
+      accessibilityHint={`${eventsCount} historical events available today`}
+    >
       <View style={styles.topRow}>
-        <Text style={styles.dayOfWeek}>{dayOfWeek}</Text>
-        <View style={styles.weatherSection}>
+        <Text 
+          style={styles.dayOfWeek}
+          accessible={true}
+          accessibilityRole="text"
+        >
+          {dayOfWeek}
+        </Text>
+        <View 
+          style={styles.weatherSection}
+          accessible={true}
+          accessibilityRole="text"
+          accessibilityLabel={`Weather: ${t(weather.translationKey)}`}
+        >
           <MaterialCommunityIcons name={weather.icon} size={16} color={COLORS.textSecondary} />
-          <Text style={styles.weatherText}>{weather.label}</Text>
+          <Text style={styles.weatherText}>{t(weather.translationKey)}</Text>
         </View>
       </View>
       <View style={styles.bottomRow}>
-        <Text style={styles.dateText}>{currentDate}</Text>
-        <Text style={styles.eventsCountText}>
+        <Text 
+          style={styles.dateText}
+          accessible={true}
+          accessibilityRole="text"
+        >
+          {currentDate}
+        </Text>
+        <Text 
+          style={styles.eventsCountText}
+          accessible={true}
+          accessibilityRole="text"
+        >
           {eventsCount > 0 ? t('date.storiesToday', { count: eventsCount }) : t('date.loading')}
         </Text>
       </View>

@@ -14,7 +14,7 @@ describe('Helper Functions', () => {
     it('should truncate text longer than max length', () => {
       const text = 'This is a very long text that should be truncated';
       const result = truncateText(text, 20);
-      expect(result).toBe('This is a very long...');
+      expect(result).toBe('This is a very lo...');
     });
 
     it('should return original text if shorter than max length', () => {
@@ -65,7 +65,7 @@ describe('Helper Functions', () => {
     it('should return true for empty/whitespace strings', () => {
       expect(isEmpty('')).toBe(true);
       expect(isEmpty('   ')).toBe(true);
-      expect(isEmpty('\\t\n')).toBe(true);
+      expect(isEmpty('\t\n')).toBe(true);
     });
 
     it('should return false for non-empty strings', () => {

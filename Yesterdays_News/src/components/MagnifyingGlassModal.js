@@ -242,13 +242,13 @@ const MagnifyingGlassModal = ({ visible, event, onClose }) => {
               </View>
               
               {/* Modern related links */}
-              {links.length > 0 && (
-                <View style={styles.linksSection}>
-                  <View style={styles.linksSectionHeader}>
-                    <MaterialIcons name="library-books" size={20} color={categoryColor} />
-                    <Text style={[styles.linksSectionTitle, { color: categoryColor }]}>{t('modal.related')}</Text>
-                  </View>
-                  {links.map((link, index) => (
+              <View style={styles.linksSection}>
+                <View style={styles.linksSectionHeader}>
+                  <MaterialIcons name="library-books" size={20} color={categoryColor} />
+                  <Text style={[styles.linksSectionTitle, { color: categoryColor }]}>{t('modal.related')}</Text>
+                </View>
+                {links.length > 0 ? (
+                  links.map((link, index) => (
                     <TouchableOpacity
                       key={index}
                       style={[styles.linkItem, { borderLeftColor: categoryColor }]}
@@ -263,9 +263,19 @@ const MagnifyingGlassModal = ({ visible, event, onClose }) => {
                         <MaterialIcons name="open-in-new" size={16} color={categoryColor} />
                       </View>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+                  ))
+                ) : (
+                  <View style={styles.noLinksContainer}>
+                    <MaterialIcons name="info-outline" size={16} color={COLORS.textTertiary} />
+                    <Text style={styles.noLinksText}>
+                      {source === 'Wikipedia' 
+                        ? t('modal.noRelatedSources') 
+                        : t('modal.noRelatedSourcesForSource', { source: source || 'this source' })
+                      }
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               {/* Attribution Section */}
               {source === 'ZenQuotes' && (
@@ -475,6 +485,21 @@ const styles = StyleSheet.create({
 
   bottomSpacer: {
     height: SPACING.xxl,
+  },
+
+  noLinksContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: LAYOUT.borderRadius,
+    marginTop: SPACING.md,
+  },
+  noLinksText: {
+    ...TYPOGRAPHY.bodySmall,
+    marginLeft: SPACING.sm,
+    color: COLORS.textTertiary,
   },
 });
 

@@ -29,6 +29,8 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+keystore.properties
+android/app/release-prod.keystore
 
 # local env files
 .env*.local

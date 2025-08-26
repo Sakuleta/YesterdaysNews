@@ -32,16 +32,38 @@ const NewspaperMasthead = ({ onLanguageChange }) => {
   };
   
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container}
+      accessible={true}
+      accessibilityRole="header"
+      accessibilityLabel={`${t('app.title')} - ${t('app.subtitle')}`}
+    >
       <View style={styles.masthead}>
-        <Text style={styles.newspaperTitle}>
+        <Text 
+          style={styles.newspaperTitle}
+          accessible={true}
+          accessibilityRole="text"
+        >
           {t('app.title')}
         </Text>
       </View>
       <View style={styles.divider} />
       <View style={styles.subHeader}>
-        <Text style={styles.subHeaderText}>{t('app.subtitle')}</Text>
-        <TouchableOpacity style={styles.languageToggle} onPress={toggleLanguage}>
+        <Text 
+          style={styles.subHeaderText}
+          accessible={true}
+          accessibilityRole="text"
+        >
+          {t('app.subtitle')}
+        </Text>
+        <TouchableOpacity 
+          style={styles.languageToggle} 
+          onPress={toggleLanguage}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('app.changeLanguage')}
+          accessibilityHint={t('app.changeLanguageHint')}
+        >
           <MaterialIcons name="language" size={20} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>

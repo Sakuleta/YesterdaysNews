@@ -40,15 +40,50 @@ class HistoricalEventsAPI {
     const currentLang = i18n.language || 'en';
     const cacheKey = `${currentLang}-${month}-${day}`;
     
-    // Clear cache for today in current language
+    // Check if we're offline - if so, don't clear cache, just return cached data
+    try {
+      // Simple network check
+      const response = await fetch('https://www.google.com', { 
+        method: 'HEAD',
+        timeout: 3000 
+      });
+      if (!response.ok) throw new Error('Network unavailable');
+    } catch (error) {
+      // We're offline, return cached data if available
+      if (__DEV__) console.log('Offline detected, returning cached data for force refresh');
+      const cachedEvents = await this.getCachedEvents(cacheKey, true); // ignore expiry
+      if (cachedEvents && cachedEvents.length > 0) {
+        return cachedEvents;
+      }
+      // No cached data available offline
+      return [];
+    }
+    
+    // We're online, proceed with normal force refresh
     try {
       const fullCacheKey = `${this.CACHE_PREFIX}${cacheKey}`;
       await AsyncStorage.removeItem(fullCacheKey);
       if (__DEV__) console.log('Cleared cache for:', cacheKey);
+      
+      // Wait a bit to ensure cache clear is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Clear any existing abort controllers for this key
+      if (this.abortControllers.has(cacheKey)) {
+        this.abortControllers.get(cacheKey).abort();
+        this.abortControllers.delete(cacheKey);
+      }
+      
+      // Clear any in-flight requests for this key
+      if (this.inFlightRequests.has(cacheKey)) {
+        this.inFlightRequests.delete(cacheKey);
+      }
+      
     } catch (error) {
       console.error('Error clearing cache:', error);
     }
     
+    // Now fetch fresh data
     return this.getEventsForDate(month, day);
   }
 
@@ -93,8 +128,19 @@ class HistoricalEventsAPI {
       // Fetch only localized content for the current language
       if (__DEV__) console.log('Fetching localized events for', cacheKey);
       const requestEpoch = this.currentEpoch;
+      
+      // Create abort controller for this specific request
+      const abortController = new AbortController();
+      this.abortControllers.set(cacheKey, abortController);
+      
       const promise = this.fetchLocalizedNews(month, day, requestEpoch)
         .then(async (localizedEvents) => {
+          // Check if request was aborted
+          if (abortController.signal.aborted) {
+            if (__DEV__) console.log('Request was aborted, returning empty array');
+            return [];
+          }
+          
           // Discard if stale epoch
           if (requestEpoch !== this.currentEpoch) {
             if (__DEV__) console.log('Response from old epoch, discarding');
@@ -118,8 +164,33 @@ class HistoricalEventsAPI {
           if (__DEV__) console.log(`Final result: ${combinedEvents.length} events for ${cacheKey}`);
           return combinedEvents;
         })
+        .catch(async (error) => {
+          // Check if request was aborted
+          if (abortController.signal.aborted) {
+            if (__DEV__) console.log('Request was aborted during error handling');
+            return [];
+          }
+          
+          // If localized news fails, try fallback sources
+          if (__DEV__) console.log('Localized news failed, trying fallback sources');
+          try {
+            const fallbackEvents = await this.fetchFallbackEvents(month, day);
+            if (fallbackEvents && fallbackEvents.length > 0) {
+              // Cache fallback results
+              await this.setCachedEvents(cacheKey, fallbackEvents);
+              return fallbackEvents;
+            }
+          } catch (fallbackError) {
+            if (__DEV__) console.error('Fallback sources also failed:', fallbackError);
+          }
+          
+          // Return empty array if all sources fail
+          return [];
+        })
         .finally(() => {
+          // Clean up
           this.inFlightRequests.delete(cacheKey);
+          this.abortControllers.delete(cacheKey);
         });
 
       this.inFlightRequests.set(cacheKey, promise);
@@ -134,6 +205,17 @@ class HistoricalEventsAPI {
         return cachedEvents;
       }
       
+      // Try fallback sources as last resort
+      try {
+        if (__DEV__) console.log('Trying fallback sources as last resort');
+        const fallbackEvents = await this.fetchFallbackEvents(month, day);
+        if (fallbackEvents && fallbackEvents.length > 0) {
+          return fallbackEvents;
+        }
+      } catch (fallbackError) {
+        if (__DEV__) console.error('All sources failed:', fallbackError);
+      }
+      
       throw new Error(this.getErrorMessage(error));
     }
   }
@@ -142,12 +224,20 @@ class HistoricalEventsAPI {
    * Fetch events from Wikipedia API
    * @param {string} month 
    * @param {string} day 
+   * @param {number} epoch
+   * @param {string} forceLang - Optional language override for fallback scenarios
    * @returns {Promise<Array>}
    */
-  static async fetchWikipediaEvents(month, day, epoch) {
+  static async fetchWikipediaEvents(month, day, epoch, forceLang = null) {
     try {
+      // Check epoch before making request
+      if (epoch !== this.currentEpoch) {
+        if (__DEV__) console.log('Wikipedia request from old epoch, skipping');
+        return [];
+      }
+
       // Get current language and map to Wikipedia language codes
-      const currentLang = i18n.language || 'en';
+      const currentLang = forceLang || i18n.language || 'en';
       const langMap = {
         'tr': 'tr', 'es': 'es', 'fr': 'fr', 'de': 'de', 'it': 'it', 
         'pt': 'pt', 'ru': 'ru', 'ar': 'ar', 'zh': 'zh', 'ja': 'ja'
@@ -190,14 +280,20 @@ class HistoricalEventsAPI {
         if (__DEV__) console.log('Wikipedia request was aborted');
         return [];
       }
-      console.error('Error fetching from Wikipedia API:', error.message);
       
-      if (error.response) {
+      // Handle specific error types
+      if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        console.error('Wikipedia API network error - will try fallback sources');
+      } else if (error.response) {
         if (error.response.status === 429) {
           console.error('Wikipedia API rate limit exceeded');
         } else if (error.response.status >= 500) {
           console.error('Wikipedia API server error');
+        } else if (error.response.status === 404) {
+          console.error('Wikipedia API endpoint not found');
         }
+      } else {
+        console.error('Error fetching from Wikipedia API:', error.message);
       }
       
       return []; // Return empty array on error
@@ -771,6 +867,19 @@ class HistoricalEventsAPI {
    */
   static async clearLanguageCache(oldLang = null) {
     try {
+      // Check if we're offline - if so, don't clear cache aggressively
+      let isOffline = false;
+      try {
+        const response = await fetch('https://www.google.com', { 
+          method: 'HEAD',
+          timeout: 3000 
+        });
+        if (!response.ok) throw new Error('Network unavailable');
+      } catch (error) {
+        isOffline = true;
+        if (__DEV__) console.log('Offline detected during language change, preserving cache');
+      }
+      
       // Increment epoch to invalidate all pending requests
       this.currentEpoch++;
       
@@ -780,6 +889,19 @@ class HistoricalEventsAPI {
       }
       this.abortControllers.clear();
       
+      // Clear in-flight requests
+      this.inFlightRequests.clear();
+      
+      // Wait a bit to ensure all aborts are processed
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // If offline, don't clear any cache - preserve all cached data
+      if (isOffline) {
+        if (__DEV__) console.log('Offline detected - preserving all cache during language change');
+        return; // Don't clear any cache when offline
+      }
+      
+      // Online: proceed with normal cache clearing
       const allKeys = await AsyncStorage.getAllKeys();
       let cacheKeys = allKeys.filter(key => key.startsWith(this.CACHE_PREFIX));
       
@@ -792,6 +914,10 @@ class HistoricalEventsAPI {
         await AsyncStorage.multiRemove(cacheKeys);
         if (__DEV__) console.log(`Cleared ${cacheKeys.length} cache entries for language: ${oldLang || 'all'}`);
       }
+      
+      // Wait a bit more to ensure cache clear is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
     } catch (error) {
       console.error('Error clearing language cache:', error);
     }
@@ -804,19 +930,36 @@ class HistoricalEventsAPI {
     try {
       const currentLang = i18n.language || 'en';
       
-      // Only use sources that support the current language
-      if (currentLang === 'en') {
-        // For English, we can use API Ninjas and MuffinLabs
-        const [apiNinjasEvents, muffinLabsEvents] = await Promise.all([
-          this.fetchApiNinjasEvents(month, day),
-          this.fetchMuffinLabsEvents(month, day)
-        ]);
-        
-        // Combine only English events
-        const allEvents = [...apiNinjasEvents, ...muffinLabsEvents];
+      // For all languages, try API Ninjas and MuffinLabs as fallbacks
+      if (__DEV__) console.log('Fetching fallback events from API Ninjas and MuffinLabs');
+      
+      const [apiNinjasEvents, muffinLabsEvents] = await Promise.all([
+        this.fetchApiNinjasEvents(month, day),
+        this.fetchMuffinLabsEvents(month, day)
+      ]);
+      
+      // Combine fallback events
+      const allEvents = [...(apiNinjasEvents || []), ...(muffinLabsEvents || [])];
+      
+      if (allEvents.length > 0) {
+        if (__DEV__) console.log(`Fallback sources returned ${allEvents.length} events`);
         return this.combineAndDeduplicateEvents(allEvents, [], []);
       }
-      // For other languages, return empty to keep localized-only policy
+      
+      // If still no events, try English Wikipedia as ultimate fallback
+      if (currentLang !== 'en') {
+        if (__DEV__) console.log('Trying English Wikipedia as ultimate fallback');
+        try {
+          const englishEvents = await this.fetchWikipediaEvents(month, day, this.currentEpoch, 'en');
+          if (englishEvents && englishEvents.length > 0) {
+            if (__DEV__) console.log(`English Wikipedia fallback returned ${englishEvents.length} events`);
+            return englishEvents;
+          }
+        } catch (wikiError) {
+          if (__DEV__) console.error('English Wikipedia fallback also failed:', wikiError);
+        }
+      }
+      
       return [];
     } catch (error) {
       if (__DEV__) console.error('Error fetching fallback events:', error);
@@ -837,9 +980,39 @@ class HistoricalEventsAPI {
         return [];
       }
 
-      // Other languages: keep existing Wikipedia flow
-      const events = await this.fetchWikipediaEvents(month, day, currentEpoch);
-      return events;
+      // Try Wikipedia API first
+      let events = await this.fetchWikipediaEvents(month, day, currentEpoch);
+      
+      // If Wikipedia fails or returns no events, try fallback sources
+      if (!events || events.length === 0) {
+        if (__DEV__) console.log('Wikipedia API failed or returned no events, trying fallback sources');
+        
+        // For non-English languages, try English Wikipedia as fallback
+        if (currentLang !== 'en') {
+          if (__DEV__) console.log('Trying English Wikipedia as fallback');
+          const fallbackEvents = await this.fetchWikipediaEvents(month, day, currentEpoch, 'en');
+          if (fallbackEvents && fallbackEvents.length > 0) {
+            if (__DEV__) console.log(`English fallback returned ${fallbackEvents.length} events`);
+            return fallbackEvents;
+          }
+        }
+        
+        // Try API Ninjas and MuffinLabs as additional fallbacks
+        if (__DEV__) console.log('Trying API Ninjas and MuffinLabs as fallbacks');
+        const [apiNinjasEvents, muffinLabsEvents] = await Promise.all([
+          this.fetchApiNinjasEvents(month, day),
+          this.fetchMuffinLabsEvents(month, day)
+        ]);
+        
+        // Combine fallback events
+        const allFallbackEvents = [...(apiNinjasEvents || []), ...(muffinLabsEvents || [])];
+        if (allFallbackEvents.length > 0) {
+          if (__DEV__) console.log(`Fallback sources returned ${allFallbackEvents.length} events`);
+          return allFallbackEvents;
+        }
+      }
+      
+      return events || [];
     } catch (error) {
       // Don't show error for aborted requests
       if (error.name === 'AbortError') {
@@ -847,7 +1020,16 @@ class HistoricalEventsAPI {
         return [];
       }
       if (__DEV__) console.error('Error fetching localized news:', error);
-      return [];
+      
+      // Try to get events from fallback sources even if localized news fails
+      try {
+        if (__DEV__) console.log('Trying fallback sources after localized news error');
+        const fallbackEvents = await this.fetchFallbackEvents(month, day);
+        return fallbackEvents || [];
+      } catch (fallbackError) {
+        if (__DEV__) console.error('Fallback sources also failed:', fallbackError);
+        return [];
+      }
     }
   }
 

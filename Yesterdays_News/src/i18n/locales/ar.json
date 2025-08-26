@@ -18,6 +18,8 @@
   "modal.by": "هيئة السجل التاريخي",
   "modal.originally": "حدث في الأصل: {{year}}",
   "modal.related": "مصادر ذات صلة",
+  "modal.noRelatedSources": "لا توجد مصادر ذات صلة متاحة لهذا الحدث.",
+  "modal.noRelatedSourcesForSource": "لا توجد مصادر ذات صلة متاحة من {{source}}.",
   "modal.openWarning": "لا يمكن فتح هذا الرابط لأسباب أمنية.",
   "generic.refresh": "تحديث"
 }

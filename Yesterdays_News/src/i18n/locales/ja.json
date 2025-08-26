@@ -18,6 +18,8 @@
   "modal.by": "歴史クロニクル編集部",
   "modal.originally": "当初の発生日: {{year}}",
   "modal.related": "関連ソース",
+  "modal.noRelatedSources": "このイベントに関連するソースはありません。",
+  "modal.noRelatedSourcesForSource": "{{source}}から関連するソースはありません。",
   "modal.openWarning": "セキュリティ上の理由によりこのリンクは開けません。",
   "generic.refresh": "更新"
 }
