@@ -3,33 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, TYPOGRAPHY, LAYOUT, SPACING } from '../utils/constants';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
-import HistoricalEventsAPI from '../services/HistoricalEventsAPI';
+import useLanguageManager from '../hooks/useLanguageManager';
 
 /**
  * NewspaperMasthead Component - Vintage Style
  * Displays the newspaper title in a classic, bold format.
+ * Now uses useLanguageManager hook for language switching logic.
  */
 const NewspaperMasthead = ({ onLanguageChange }) => {
-  const { t, i18n } = useTranslation();
-  
-  const toggleLanguage = async () => {
-    const currentLang = i18n.language;
-    const languages = ['tr', 'en', 'es', 'fr', 'de', 'it', 'pt', 'ru'];
-    const currentIndex = languages.indexOf(currentLang);
-    const nextIndex = (currentIndex + 1) % languages.length;
-    const newLang = languages[nextIndex];
-    
-    // Notify parent component about language change first
-    if (onLanguageChange) {
-      onLanguageChange(newLang);
-    }
-    
-    // Clear cache when switching languages to get fresh content
-    await HistoricalEventsAPI.clearLanguageCache();
-    
-    // Change language
-    i18n.changeLanguage(newLang);
-  };
+  const { t } = useTranslation();
+  const { toggleLanguage } = useLanguageManager(onLanguageChange);
   
   return (
     <View 

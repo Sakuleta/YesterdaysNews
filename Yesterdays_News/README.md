@@ -1,16 +1,19 @@
-### Historical Events Mobile App
+# Yesterdays News 📱
 
-A React Native mobile application that displays historical events that occurred on the current date throughout history. Built with Expo for cross-platform compatibility (iOS, Android, and Web).
+A modern, elegantly architected React Native mobile application that displays historical events from "yesterday" in history. Built with Expo for cross-platform compatibility (iOS, Android, and Web) following modern software engineering principles.
 
 ## 🌟 Features
 
-- **Daily Historical Events**: Automatically shows events that happened on today's date in previous years
-- **Beautiful Card Interface**: Clean, modern design with category icons and color coding
-- **Offline Support**: Caches events for offline viewing with automatic cache management
-- **Pull-to-Refresh**: Easy refresh functionality to get latest data
-- **Error Handling**: Comprehensive error handling with retry mechanisms
-- **Responsive Design**: Works on phones, tablets, and web browsers
-- **Performance Optimized**: Efficient loading and rendering with virtual scrolling
+- **📅 Daily Historical Events**: Discover what happened "yesterday" in history with events from multiple eras
+- **📰 Vintage Newspaper Design**: Beautiful retro-style interface with smooth animations
+- **🌍 Multi-Language Support**: Available in 8 languages (Turkish, English, Spanish, French, German, Italian, Portuguese, Russian)
+- **🔍 Interactive Details**: Tap events to explore detailed information in elegant modal views
+- **🌐 Multiple Data Sources**: Aggregates from Wikipedia, API Ninjas, and MuffinLabs with smart failover
+- **⚡ Smart Caching**: Intelligent caching with automatic cache management and offline support
+- **🔄 Pull-to-Refresh**: Easy refresh with force refresh capability
+- **🛡️ Error Boundaries**: Comprehensive error handling with graceful degradation
+- **📱 Modern UI/UX**: Smooth animations, responsive design, and accessibility support
+- **🏗️ Modular Architecture**: Clean, maintainable code following SOLID principles
 
 ## 📱 Screenshots
 
@@ -66,51 +69,150 @@ The app features a single-screen interface with:
 
 ## 📂 Project Structure
 
+This application follows a modular, scalable architecture with clear separation of concerns:
+
 ```text
 YesterdaysNews/
 ├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── DateHeader.js    # Current date display
-│   │   ├── EventCard.js     # Individual event display
-│   │   ├── LoadingSpinner.js # Loading states
-│   │   └── ErrorMessage.js  # Error handling UI
-│   ├── screens/
-│   │   └── HomeScreen.js    # Main application screen
-│   ├── services/
-│   │   ├── HistoricalEventsAPI.js # Wikipedia API integration
+│   ├── components/           # Reusable UI components
+│   │   ├── ui/              # Core UI components library
+│   │   │   ├── Button.js    # Versatile button component
+│   │   │   ├── LoadingIndicator.js # Multiple loading styles
+│   │   │   ├── EmptyState.js # Empty state displays
+│   │   │   └── ErrorBoundary.js # Error handling wrapper
+│   │   ├── EventCard.js     # Historical event card (modularized)
+│   │   ├── EventCardHeader.js # Event card header section
+│   │   ├── EventCardContent.js # Event card content
+│   │   ├── EventCardFooter.js # Event card footer
+│   │   ├── MagnifyingGlassModal.js # Event detail modal (modularized)
+│   │   ├── ModalHeader.js   # Modal header component
+│   │   ├── ArticleContent.js # Article content display
+│   │   ├── LinksSection.js  # Related links section
+│   │   ├── AttributionSection.js # Attribution display
+│   │   └── NewspaperMasthead.js # App header
+│   ├── hooks/               # Custom React hooks
+│   │   ├── useEventsData.js # Events data management
+│   │   ├── useModalManager.js # Modal state management
+│   │   ├── useModalAnimations.js # Animation logic
+│   │   ├── useScrollHandler.js # Scroll performance
+│   │   ├── useFlatListConfig.js # List configuration
+│   │   ├── usePerformanceMonitor.js # Performance tracking
+│   │   └── useLanguageManager.js # Language switching
+│   ├── services/            # Business logic and API services
+│   │   ├── ApiClient.js    # HTTP client with interceptors
+│   │   ├── EventService.js # Historical events operations
+│   │   ├── CacheManager.js # Intelligent caching
+│   │   ├── CircuitBreaker.js # Circuit breaker pattern
+│   │   ├── EventProcessor.js # Event processing & deduplication
+│   │   ├── ApiIntegrations.js # External API integrations
+│   │   ├── LinkSecurityManager.js # Link security & validation
+│   │   ├── NetworkMonitor.js # Network connectivity monitoring
 │   │   └── DateUtils.js     # Date utility functions
-│   └── utils/
-│       ├── constants.js     # App constants (colors, typography)
-│       └── helpers.js       # Helper functions
+│   ├── utils/               # Utility functions and helpers
+│   │   ├── errorHandling.js # Error handling utilities
+│   │   ├── validation.js    # Data validation helpers
+│   │   ├── animations.js    # Animation utilities
+│   │   └── constants.js     # App constants (colors, typography)
+│   ├── types/               # Type definitions (JSDoc)
+│   │   ├── Event.js         # Event-related types
+│   │   ├── ApiResponse.js   # API response types
+│   │   └── UI.js           # UI component types
+│   ├── styles/              # Common style templates
+│   │   └── commonStyles.js  # Reusable style patterns
+│   └── screens/
+│       └── HomeScreen.js    # Main screen (significantly simplified)
 ├── __tests__/               # Unit tests
 ├── App.js                   # Root component
 └── package.json
 ```
 
-## 🔧 Architecture
+## 🏗️ Architecture
 
-### Components Overview
+This application follows modern software engineering principles with a clean, modular architecture that ensures maintainability, scalability, and testability.
 
-- **DateHeader**: Displays current date and event count
-- **EventCard**: Shows individual historical events with category styling
-- **LoadingSpinner**: Various loading indicators for different contexts
-- **ErrorMessage**: Error handling with retry functionality
-- **HomeScreen**: Main screen with state management and data fetching
+### 🎯 Design Principles
 
-### API Integration
+- **Single Responsibility Principle**: Each module has one clear, focused purpose
+- **Separation of Concerns**: UI, business logic, and data access are cleanly separated
+- **Dependency Inversion**: High-level modules don't depend on low-level modules
+- **Open/Closed Principle**: Modules are open for extension but closed for modification
+- **DRY (Don't Repeat Yourself)**: Common patterns are extracted into reusable utilities
 
-The app uses Wikipedia's "On This Day" API:
+### 📚 Layered Architecture
 
-- **Endpoint**: `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/{month}/{day}`
-- **Caching**: 24-hour cache expiry with offline fallback
-- **Error Handling**: Network error recovery with cached data
-- **Data Transformation**: Raw API data processed for consistent display
+#### 1. **Presentation Layer** (`src/components/`)
+- **UI Components**: Modular, reusable React components
+- **Custom Hooks**: Encapsulated stateful logic
+- **Styles**: Centralized style management
 
-### State Management
+#### 2. **Service Layer** (`src/services/`)
+- **ApiClient**: HTTP client with interceptors and error handling
+- **EventService**: High-level business operations for events
+- **CacheManager**: Intelligent caching with TTL and size limits
+- **NetworkMonitor**: Network connectivity and quality monitoring
+- **CircuitBreaker**: Fault tolerance for external API calls
 
-- Local state management using React hooks (`useState`, `useEffect`)
-- Persistent storage with AsyncStorage for caching
-- Optimistic UI updates with error boundaries
+#### 3. **Utility Layer** (`src/utils/`)
+- **errorHandling**: Centralized error handling and user-friendly messages
+- **validation**: Data validation and sanitization
+- **animations**: Reusable animation patterns
+- **constants**: Application-wide constants and configuration
+
+#### 4. **Type Definitions** (`src/types/`)
+- **Event.js**: Event-related type definitions and utilities
+- **ApiResponse.js**: API response types and validation
+- **UI.js**: UI component prop types and validation
+
+### 🔄 Data Flow
+
+1. **User Interaction** → Custom Hook → Service Layer
+2. **Service Layer** → ApiClient → External APIs
+3. **Response Processing** → Validation → Transformation → Caching
+4. **UI Update** → Error Handling → Performance Monitoring
+
+### 📊 Key Components
+
+#### UI Components Library (`src/components/ui/`)
+- **Button**: Versatile button with variants (primary, secondary, outline, ghost)
+- **LoadingIndicator**: Multiple loading styles (spinner, pulse, dots)
+- **EmptyState**: Configurable empty state displays with presets
+- **ErrorBoundary**: React Error Boundary with fallback UI and retry options
+
+#### Custom Hooks (`src/hooks/`)
+- **useEventsData**: Events fetching, caching, and state management
+- **useModalManager**: Modal visibility and content management
+- **useModalAnimations**: Modal entrance/exit animations
+- **useLanguageManager**: Language switching with cache clearing
+- **usePerformanceMonitor**: Component performance tracking
+- **useScrollHandler**: Scroll performance optimization
+
+#### Service Layer (`src/services/`)
+- **ApiClient**: Axios-based HTTP client with request/response interceptors
+- **EventService**: High-level event operations (fetch, process, validate)
+- **CacheManager**: LRU cache with TTL, size limits, and compression
+- **CircuitBreaker**: Fault tolerance pattern for external services
+- **EventProcessor**: Event deduplication, scoring, and curation
+- **NetworkMonitor**: Real-time network connectivity monitoring
+
+### 🔧 Technical Features
+
+#### Caching Strategy
+- **Multi-layer Caching**: Memory → AsyncStorage → Network
+- **TTL-based Expiry**: 24-hour cache expiry with sliding window
+- **Size Limits**: Automatic cleanup when cache size exceeds limits
+- **Compression**: Data compression for storage efficiency
+
+#### Error Handling
+- **Global Error Boundary**: Catches React errors with graceful degradation
+- **Network Error Recovery**: Automatic retry with exponential backoff
+- **User-Friendly Messages**: Contextual error messages for users
+- **Error Logging**: Structured error logging for debugging
+
+#### Performance Optimization
+- **Component Memoization**: React.memo for expensive components
+- **Virtual Scrolling**: Efficient rendering of large lists
+- **Lazy Loading**: On-demand loading of heavy components
+- **Performance Monitoring**: Real-time performance metrics tracking
 
 ## 🎨 Design System
 

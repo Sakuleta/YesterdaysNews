@@ -11,8 +11,7 @@ class PerformanceMonitor {
     warmStart: null,
     hotStart: null,
     memoryUsage: [],
-    renderTimes: [],
-    scrollMetrics: []
+    renderTimes: []
   };
 
   /**
@@ -57,19 +56,7 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Record scrolling performance metrics
-   */
-  static recordScrollMetrics(scrollData) {
-    this.metrics.scrollMetrics.push({
-      ...scrollData,
-      timestamp: Date.now()
-    });
-    
-    if (__DEV__) {
-      console.log(`📜 Scroll: ${scrollData.type} - ${scrollData.duration}ms`);
-    }
-  }
+
 
   /**
    * Get current memory usage (Android only)
@@ -163,8 +150,7 @@ class PerformanceMonitor {
       warmStart: null,
       hotStart: null,
       memoryUsage: [],
-      renderTimes: [],
-      scrollMetrics: []
+      renderTimes: []
     };
     this.startTime = null;
   }
