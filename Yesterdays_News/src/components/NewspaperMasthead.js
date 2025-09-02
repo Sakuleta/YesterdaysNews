@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { COLORS, TYPOGRAPHY, LAYOUT, SPACING } from '../utils/constants';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,19 +10,59 @@ import useLanguageManager from '../hooks/useLanguageManager';
  * Displays the newspaper title in a classic, bold format.
  * Now uses useLanguageManager hook for language switching logic.
  */
-const NewspaperMasthead = ({ onLanguageChange }) => {
-  const { t } = useTranslation();
-  const { toggleLanguage } = useLanguageManager(onLanguageChange);
-  
+const NewspaperMasthead = ({ onLanguageChange, isLoading = false }) => {
+  const { t, i18n } = useTranslation();
+  const { changeLanguage } = useLanguageManager(onLanguageChange);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+    { code: 'pt', name: 'Português', flag: '🇵🇹' },
+    { code: 'ru', name: 'Русский', flag: '🇷🇺' }
+  ];
+
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  const handleLanguageSelect = async (languageCode) => {
+    await changeLanguage(languageCode);
+    setShowLanguageModal(false);
+  };
+
+  const renderLanguageItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.languageItem,
+        item.code === i18n.language && styles.selectedLanguageItem
+      ]}
+      onPress={() => handleLanguageSelect(item.code)}
+    >
+      <Text style={styles.languageFlag}>{item.flag}</Text>
+      <Text style={[
+        styles.languageName,
+        item.code === i18n.language && styles.selectedLanguageName
+      ]}>
+        {item.name}
+      </Text>
+      {item.code === i18n.language && (
+        <MaterialIcons name="check" size={20} color={COLORS.primary} />
+      )}
+    </TouchableOpacity>
+  );
+
   return (
-    <View 
+    <View
       style={styles.container}
       accessible={true}
       accessibilityRole="header"
       accessibilityLabel={`${t('app.title')} - ${t('app.subtitle')}`}
     >
       <View style={styles.masthead}>
-        <Text 
+        <Text
           style={styles.newspaperTitle}
           accessible={true}
           accessibilityRole="text"
@@ -32,25 +72,71 @@ const NewspaperMasthead = ({ onLanguageChange }) => {
       </View>
       <View style={styles.divider} />
       <View style={styles.subHeader}>
-        <Text 
+        <Text
           style={styles.subHeaderText}
           accessible={true}
           accessibilityRole="text"
         >
           {t('app.subtitle')}
         </Text>
-        <TouchableOpacity 
-          style={styles.languageToggle} 
-          onPress={toggleLanguage}
+        <TouchableOpacity
+          style={[
+            styles.languageToggle,
+            isLoading && styles.languageToggleDisabled
+          ]}
+          onPress={() => !isLoading && setShowLanguageModal(true)}
+          disabled={isLoading}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={t('app.changeLanguage')}
-          accessibilityHint={t('app.changeLanguageHint')}
+          accessibilityLabel={isLoading ? t('app.languageLoading') : t('app.selectLanguage')}
+          accessibilityHint={isLoading ? t('app.languageLoadingHint') : `${t('app.selectLanguage')} - ${currentLanguage.name}`}
         >
-          <MaterialIcons name="language" size={20} color={COLORS.textSecondary} />
+          <Text style={[
+            styles.currentLanguageFlag,
+            isLoading && styles.languageFlagDisabled
+          ]}>{currentLanguage.flag}</Text>
+          <MaterialIcons
+            name={isLoading ? "hourglass-empty" : "expand-more"}
+            size={20}
+            color={isLoading ? COLORS.textDisabled : COLORS.textSecondary}
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.divider} />
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.languageModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('app.selectLanguage')}</Text>
+              <TouchableOpacity
+                onPress={() => setShowLanguageModal(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={languages}
+              keyExtractor={(item) => item.code}
+              renderItem={renderLanguageItem}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.languageListContainer}
+              scrollEnabled={false} // Disable scrolling to force all items to fit
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -126,7 +212,75 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: SPACING.md,
     padding: SPACING.xs,
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  currentLanguageFlag: {
+    fontSize: 16,
+    marginRight: SPACING.xs / 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageModal: {
+    backgroundColor: COLORS.background,
+    borderRadius: LAYOUT.borderRadius,
+    margin: SPACING.xl,
+    width: '80%',
+    maxWidth: 300,
+    maxHeight: '90%', // Further increased to ensure all languages fit
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    ...TYPOGRAPHY.headlineSmall,
+    color: COLORS.textPrimary,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    minHeight: 50, // Ensure consistent item height
+  },
+  selectedLanguageItem: {
+    backgroundColor: COLORS.primary + '10',
+  },
+  languageFlag: {
+    fontSize: 20,
+    marginRight: SPACING.md,
+  },
+  languageName: {
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  selectedLanguageName: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  languageToggleDisabled: {
+    opacity: 0.5,
+  },
+  languageFlagDisabled: {
+    opacity: 0.5,
+  },
+  languageListContainer: {
+    flexGrow: 1, // Allow the list to grow to fit content
   },
 });
 

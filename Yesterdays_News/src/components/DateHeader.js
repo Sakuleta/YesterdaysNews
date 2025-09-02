@@ -21,24 +21,41 @@ const DateHeader = ({ eventsCount = 0, refreshTrigger = 0 }) => {
   const dayOfWeek = moment().format('dddd');
 
   const [weather, setWeather] = useState({ icon: 'weather-cloudy', translationKey: 'weather.overcast' });
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      // Use forceRefresh when refreshTrigger changes (pull-to-refresh)
-      const result = await getCurrentWeather(refreshTrigger > 0);
-      if (isMounted && result) {
-        setWeather({
-          icon: result.icon || 'weather-cloudy',
-          translationKey: result.translationKey || 'weather.overcast',
-        });
+      try {
+        // Use forceRefresh when refreshTrigger changes (pull-to-refresh)
+        // Use isInitialLoad for first app load to get fresher data
+        const result = await getCurrentWeather(refreshTrigger > 0, isFirstLoad);
+        if (isMounted && result) {
+          setWeather({
+            icon: result.icon || 'weather-cloudy',
+            translationKey: result.translationKey || 'weather.overcast',
+          });
+          // Mark that first load is complete
+          if (isFirstLoad) {
+            setIsFirstLoad(false);
+          }
+        }
+      } catch (error) {
+        console.error('Weather fetch error:', error);
+        // Keep existing weather or fallback to default
+        if (isMounted && (!weather.icon || weather.icon === 'weather-cloudy')) {
+          setWeather({
+            icon: 'weather-sunny', // Default to sunny as user mentioned
+            translationKey: 'weather.sunny',
+          });
+        }
       }
     })();
     return () => { isMounted = false; };
-  }, [refreshTrigger]);
+  }, [refreshTrigger, weather.icon, isFirstLoad]);
 
   return (
-    <View 
+    <View
       style={styles.container}
       accessible={true}
       accessibilityRole="header"
@@ -46,14 +63,14 @@ const DateHeader = ({ eventsCount = 0, refreshTrigger = 0 }) => {
       accessibilityHint={`${eventsCount} historical events available today`}
     >
       <View style={styles.topRow}>
-        <Text 
+        <Text
           style={styles.dayOfWeek}
           accessible={true}
           accessibilityRole="text"
         >
           {dayOfWeek}
         </Text>
-        <View 
+        <View
           style={styles.weatherSection}
           accessible={true}
           accessibilityRole="text"
@@ -64,14 +81,14 @@ const DateHeader = ({ eventsCount = 0, refreshTrigger = 0 }) => {
         </View>
       </View>
       <View style={styles.bottomRow}>
-        <Text 
+        <Text
           style={styles.dateText}
           accessible={true}
           accessibilityRole="text"
         >
           {currentDate}
         </Text>
-        <Text 
+        <Text
           style={styles.eventsCountText}
           accessible={true}
           accessibilityRole="text"

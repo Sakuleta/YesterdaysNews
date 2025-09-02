@@ -1,12 +1,14 @@
-import React, { useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   FlatList,
-  SafeAreaView
+  SafeAreaView,
+  View
 } from 'react-native';
 
 // Components
 import EventCard from '../components/EventCard';
+import NewspaperMasthead from '../components/NewspaperMasthead';
 
 // Custom Hooks
 import useEventsData from '../hooks/useEventsData';
@@ -14,7 +16,8 @@ import useModalManager from '../hooks/useModalManager';
 import useFlatListConfig from '../hooks/useFlatListConfig';
 
 // Utils
-import { COLORS } from '../utils/constants';
+import { COLORS, SPACING } from '../utils/constants';
+import { formatDateKey } from '../services/DateUtils';
 
 /**
  * HomeScreen Component - Vintage Edition
@@ -32,8 +35,11 @@ const HomeScreen = () => {
     eventsData.languageChanging,
     eventsData.refreshing,
     eventsData.loadEvents,
-    eventsData.handleRefresh
+    eventsData.handleRefresh,
+    eventsData.loading || eventsData.languageChanging
   );
+
+  // Removed date picker state and handlers
 
   const renderItem = useCallback(({ item }) => (
     <EventCard event={item} onPress={modalManager.handleEventPress} />
@@ -41,6 +47,7 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <FlatList
         renderItem={renderItem}
         {...flatListConfig.flatListConfig}
@@ -53,6 +60,7 @@ const HomeScreen = () => {
           onClose={modalManager.handleCloseModal}
         />
       ) : null}
+
     </SafeAreaView>
   );
 };
@@ -62,6 +70,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  // Header is provided by ListHeaderComponent in useFlatListConfig
 });
 
 export default HomeScreen;

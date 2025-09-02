@@ -9,7 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
 const WEATHER_CACHE_KEY = 'weather_cache';
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for better refresh on app open
+const INITIAL_LOAD_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes for first app load
 
 const WEATHER_CODE_MAP = {
   0: { icon: 'weather-sunny', translationKey: 'weather.sunny' },
@@ -47,20 +48,22 @@ const DEFAULT_WEATHER = { icon: 'weather-cloudy', translationKey: 'weather.overc
 /**
  * Get cached weather data if available and not expired
  */
-async function getCachedWeather() {
+async function getCachedWeather(useShortCache = false) {
   try {
     const cached = await AsyncStorage.getItem(WEATHER_CACHE_KEY);
     if (!cached) return null;
-    
+
     const parsedCache = JSON.parse(cached);
     const now = Date.now();
-    
-    // Check if cache is still valid (within 30 minutes)
-    if (now - parsedCache.timestamp < CACHE_DURATION) {
-      if (__DEV__) console.log('Returning cached weather data');
+    const cacheDuration = useShortCache ? INITIAL_LOAD_CACHE_DURATION : CACHE_DURATION;
+
+    // Check if cache is still valid
+    if (now - parsedCache.timestamp < cacheDuration) {
+      if (__DEV__) console.log('Returning cached weather data (cache duration:', cacheDuration / 1000, 'seconds)');
       return parsedCache.weather;
     }
-    
+
+    if (__DEV__) console.log('Cached weather expired (age:', Math.round((now - parsedCache.timestamp) / 1000), 'seconds)');
     return null;
   } catch (error) {
     console.error('Error reading weather cache:', error);
@@ -84,51 +87,79 @@ async function setCachedWeather(weather) {
   }
 }
 
-export async function getCurrentWeather(forceRefresh = false) {
+export async function getCurrentWeather(forceRefresh = false, isInitialLoad = false) {
   try {
+    if (__DEV__) {
+      console.log('WeatherService: getCurrentWeather called with forceRefresh:', forceRefresh, 'isInitialLoad:', isInitialLoad);
+    }
+
     // Check cache first unless force refresh is requested
+    // Use shorter cache duration for initial load to ensure fresh data
     if (!forceRefresh) {
-      const cachedWeather = await getCachedWeather();
+      const useShortCache = isInitialLoad;
+      const cachedWeather = await getCachedWeather(useShortCache);
       if (cachedWeather) {
+        if (__DEV__) console.log('WeatherService: Returning cached weather:', cachedWeather);
         return cachedWeather;
       }
     }
 
+    if (__DEV__) console.log('WeatherService: Requesting location permissions...');
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
+      if (__DEV__) console.log('WeatherService: Location permission denied');
       return DEFAULT_WEATHER;
     }
 
+    if (__DEV__) console.log('WeatherService: Getting current position...');
     const coords = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest });
     const { latitude, longitude } = coords.coords || {};
     if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+      if (__DEV__) console.log('WeatherService: Invalid coordinates:', { latitude, longitude });
       return DEFAULT_WEATHER;
     }
 
+    if (__DEV__) console.log('WeatherService: Coordinates:', { latitude, longitude });
+
     const url = `${OPEN_METEO_URL}?latitude=${latitude}&longitude=${longitude}&current=weather_code&timezone=auto`;
+    if (__DEV__) console.log('WeatherService: API URL:', url);
+
     const resp = await fetch(url, { method: 'GET' });
-    if (!resp.ok) return DEFAULT_WEATHER;
+    if (!resp.ok) {
+      if (__DEV__) console.log('WeatherService: API request failed with status:', resp.status);
+      return DEFAULT_WEATHER;
+    }
+
     const json = await resp.json();
+    if (__DEV__) console.log('WeatherService: API response:', json);
+
     const code = json?.current?.weather_code;
+    if (__DEV__) console.log('WeatherService: Weather code received:', code);
+
     const map = WEATHER_CODE_MAP[code];
-    if (!map) return DEFAULT_WEATHER;
-    
+    if (!map) {
+      if (__DEV__) console.log('WeatherService: Unknown weather code:', code, 'returning default');
+      return DEFAULT_WEATHER;
+    }
+
     const weatherData = { icon: map.icon, translationKey: map.translationKey };
-    
+    if (__DEV__) console.log('WeatherService: Mapped weather data:', weatherData);
+
     // Cache the fresh weather data
     await setCachedWeather(weatherData);
-    
+
     return weatherData;
   } catch (error) {
-    console.error('Error fetching weather:', error);
-    
+    if (__DEV__) console.error('WeatherService: Error fetching weather:', error);
+
     // Try to return cached weather even if expired when network fails
     const cachedWeather = await getCachedWeather();
     if (cachedWeather) {
-      if (__DEV__) console.log('Network error, returning expired cached weather');
+      if (__DEV__) console.log('WeatherService: Network error, returning expired cached weather:', cachedWeather);
       return cachedWeather;
     }
-    
+
+    if (__DEV__) console.log('WeatherService: Returning default weather');
     return DEFAULT_WEATHER;
   }
 }

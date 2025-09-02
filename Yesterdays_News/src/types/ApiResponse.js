@@ -264,28 +264,19 @@ export const API_SOURCES = {
       period: 60000, // 1 minute
     },
   },
-  apiNinjas: {
-    name: 'API Ninjas',
-    baseUrl: 'https://api.api-ninjas.com/v1/historicalevents',
+
+  deutscheDigitaleBibliothek: {
+    name: 'Deutsche Digitale Bibliothek',
+    baseUrl: 'https://api.deutsche-digitale-bibliothek.de/search',
     config: {
-      language: 'en',
+      language: 'de',
+      format: 'json',
     },
     enabled: true,
-    priority: 8,
+    priority: 7,
     rateLimit: {
       requests: 50,
-      period: 60000,
-    },
-  },
-  muffinLabs: {
-    name: 'MuffinLabs',
-    baseUrl: 'https://history.muffinlabs.com/date',
-    config: {},
-    enabled: true,
-    priority: 6,
-    rateLimit: {
-      requests: 30,
-      period: 60000,
+      period: 60000, // 1 minute
     },
   },
 };

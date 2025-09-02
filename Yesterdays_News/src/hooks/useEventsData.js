@@ -53,6 +53,14 @@ export const useEventsData = () => {
         type: err.message.includes('Network') ? 'network' : 'error',
         message: errorMessage
       });
+
+      // For language changes, if we get an error, try to show a better message
+      if (!isRefresh) {
+        setError({
+          type: 'empty',
+          message: 'Unable to load events for the selected language. Please try again.'
+        });
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,11 +92,11 @@ export const useEventsData = () => {
       setLanguageChanging(true);
       setError(null); // Clear any previous errors
       setEvents([]); // Clear old events to force refresh
-      // Debounce the reload to avoid rapid re-triggers
+      // Debounce the reload to avoid rapid re-triggers (increased from 250ms to 500ms)
       if (langDebounceRef.current) clearTimeout(langDebounceRef.current);
       langDebounceRef.current = setTimeout(() => {
         loadEvents(true);
-      }, 250);
+      }, 500);
     }
     return () => {
       if (langDebounceRef.current) {

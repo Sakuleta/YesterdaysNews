@@ -69,11 +69,11 @@ const ErrorMessage = ({
   const getTitle = () => {
     switch (type) {
       case 'network':
-        return 'No Internet Connection';
+        return t('error.networkTitle');
       case 'empty':
-        return 'No Events Found';
+        return t('error.emptyTitle');
       default:
-        return 'Oops! Something went wrong';
+        return t('error.defaultTitle');
     }
   };
 
@@ -153,7 +153,7 @@ const ErrorMessage = ({
         {type === 'empty' && (
           <View style={styles.emptyStateInfo}>
             <Text style={styles.emptyStateText}>
-              🗓️ Try checking another date or come back tomorrow for new historical events!
+              {t('empty.tip')}
             </Text>
           </View>
         )}
@@ -197,20 +197,22 @@ export const InlineErrorMessage = ({ message, onRetry, style }) => {
  * Card-style ErrorMessage
  */
 export const ErrorCard = ({ message, onRetry, style }) => {
+  const { t } = useTranslation();
+
   return (
     <View style={[styles.cardContainer, style]}>
       <View style={styles.cardContent}>
-        <MaterialIcons 
-          name="error-outline" 
-          size={24} 
-          color={COLORS.error} 
+        <MaterialIcons
+          name="error-outline"
+          size={24}
+          color={COLORS.error}
           style={styles.cardIcon}
         />
         <View style={styles.cardTextContainer}>
           <Text style={styles.cardMessage}>{message}</Text>
           {onRetry && (
             <TouchableOpacity onPress={onRetry} style={styles.cardRetry}>
-              <Text style={styles.cardRetryText}>Try again</Text>
+              <Text style={styles.cardRetryText}>{t('error.tryAgain')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -388,6 +390,12 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  emptyStateText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
 

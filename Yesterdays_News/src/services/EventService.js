@@ -51,8 +51,7 @@ class EventService {
         // Fetch from multiple sources
         const sources = await Promise.allSettled([
           this.fetchFromWikipedia(month, day, language),
-          this.fetchFromApiNinjas(month, day, language),
-          this.fetchFromMuffinLabs(month, day)
+          this.fetchFromDeutscheDigitaleBibliothek(month, day)
         ]);
 
         // Collect successful results
@@ -107,50 +106,35 @@ class EventService {
     }
   }
 
+
+
   /**
-   * Fetch events from API Ninjas
-   * @param {string} month - Month
-   * @param {string} day - Day
-   * @param {string} language - Language code
+   * Fetch events from Deutsche Digitale Bibliothek
+   * @param {string} month - Month (01-12)
+   * @param {string} day - Day (01-31)
    * @returns {Promise<Array>} Array of events
    */
-  async fetchFromApiNinjas(month, day, language = 'en') {
-    const baseUrl = process.env.EXPO_PUBLIC_API_NINJAS_URL || 'https://api.api-ninjas.com/v1/historicalevents';
-    const apiKey = process.env.EXPO_PUBLIC_API_NINJAS_KEY;
-
-    if (!apiKey) {
-      logError(null, 'EventService.fetchFromApiNinjas', 'API key not configured');
-      return [];
-    }
-
-    const url = `${baseUrl}?month=${month}&day=${day}&language=${language}`;
+  async fetchFromDeutscheDigitaleBibliothek(month, day) {
+    const baseUrl = 'https://api.deutsche-digitale-bibliothek.de/search';
 
     try {
-      const response = await this.apiClient.get(url, {
-        headers: { 'X-Api-Key': apiKey }
+      // Create date query for "on this day" - search for items with dates ending with MMDD
+      const dateQuery = `time:*${month}${day}*`;
+
+      // Add search parameters
+      const params = new URLSearchParams({
+        query: dateQuery,
+        rows: '50',
+        sort: 'RELEVANCE',
+        facet: ['time_fct', 'type_fct'],
       });
-      return this.transformApiNinjasEvents(response.data || []);
-    } catch (error) {
-      logError(error, 'EventService.fetchFromApiNinjas', 'Failed to fetch from API Ninjas');
-      return [];
-    }
-  }
 
-  /**
-   * Fetch events from MuffinLabs
-   * @param {string} month - Month
-   * @param {string} day - Day
-   * @returns {Promise<Array>} Array of events
-   */
-  async fetchFromMuffinLabs(month, day) {
-    const baseUrl = 'https://history.muffinlabs.com/date';
-    const url = `${baseUrl}/${month}/${day}`;
-
-    try {
+      const url = `${baseUrl}?${params.toString()}`;
       const response = await this.apiClient.get(url);
-      return this.transformMuffinLabsEvents(response.data?.data?.Events || []);
+
+      return this.transformDeutscheDigitaleBibliothekEvents(response.data?.results || []);
     } catch (error) {
-      logError(error, 'EventService.fetchFromMuffinLabs', 'Failed to fetch from MuffinLabs');
+      logError(error, 'EventService.fetchFromDeutscheDigitaleBibliothek', 'Failed to fetch from Deutsche Digitale Bibliothek');
       return [];
     }
   }
@@ -195,49 +179,61 @@ class EventService {
         source: 'Wikipedia'
       }))
       .filter(event => !isNaN(event.year))
-      .slice(0, 60);
+      // No limit - show all available events
   }
 
-  /**
-   * Transform API Ninjas response
-   * @param {Array} events - Raw API Ninjas events
-   * @returns {Array} Transformed events
-   */
-  transformApiNinjasEvents(events) {
-    return events
-      .filter(event => event.year && event.event)
-      .map((event, index) => ({
-        id: `api-ninjas-${event.year}-${event.event.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '')}-${index}`,
-        year: parseInt(event.year, 10),
-        title: this.extractTitle(event.event),
-        description: event.event,
-        category: this.categorizeEvent(event.event),
-        links: [],
-        source: 'API Ninjas'
-      }))
-      .filter(event => !isNaN(event.year))
-      .slice(0, 60);
-  }
+
 
   /**
-   * Transform MuffinLabs response
-   * @param {Array} events - Raw MuffinLabs events
+   * Transform Deutsche Digitale Bibliothek results into events
+   * @param {Array} results - Raw results from DDB API
    * @returns {Array} Transformed events
    */
-  transformMuffinLabsEvents(events) {
-    return events
-      .filter(event => event.year && event.text)
-      .map((event, index) => ({
-        id: `muffinlabs-${event.year}-${event.text.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '')}-${index}`,
-        year: parseInt(event.year, 10),
-        title: this.extractTitle(event.text),
-        description: event.text,
-        category: this.categorizeEvent(event.text),
-        links: [],
-        source: 'MuffinLabs'
-      }))
-      .filter(event => !isNaN(event.year))
-      .slice(0, 60);
+  transformDeutscheDigitaleBibliothekEvents(results) {
+    return results
+      .filter(result => result && result.docs && result.docs.length > 0)
+      .map((result, index) => {
+        const doc = result.docs[0];
+
+        // Extract year from time field
+        let year = null;
+        if (doc.time && Array.isArray(doc.time)) {
+          const timeValue = doc.time[0];
+          if (typeof timeValue === 'string') {
+            const yearMatch = timeValue.match(/^(\d{4})/);
+            if (yearMatch) {
+              year = parseInt(yearMatch[1], 10);
+            }
+          } else if (typeof timeValue === 'number') {
+            year = timeValue;
+          }
+        }
+
+        // Extract title and description
+        const title = doc.title ? doc.title[0] : 'Unbekannter Titel';
+        const description = doc.description ? doc.description[0] : doc.title ? doc.title[0] : 'Keine Beschreibung verfügbar';
+
+        // Create links
+        const links = [];
+        if (doc.id && doc.id[0]) {
+          links.push({
+            title: title,
+            url: `https://www.deutsche-digitale-bibliothek.de/item/${doc.id[0]}`
+          });
+        }
+
+        return {
+          id: `ddb-${doc.id ? doc.id[0] : `unknown-${index}`}`,
+          year: year || 0,
+          title: this.extractTitle(title),
+          description: description,
+          category: this.categorizeEvent(description),
+          links: links,
+          source: 'Deutsche Digitale Bibliothek'
+        };
+      })
+      .filter(event => event.year > 0 && !isNaN(event.year))
+      // No limit - show all available events
   }
 
   /**
@@ -333,7 +329,7 @@ class EventService {
   getStats() {
     return {
       serviceName: 'EventService',
-      supportedSources: ['Wikipedia', 'API Ninjas', 'MuffinLabs'],
+      supportedSources: ['Wikipedia', 'Deutsche Digitale Bibliothek'],
       lastFetchTime: null, // Would track in production
       cacheHitRate: 0, // Would calculate in production
     };

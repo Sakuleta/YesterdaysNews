@@ -17,6 +17,9 @@
     },
     "web": {
       "favicon": "./assets/web/favicon.ico"
+    },
+    "extra": {
+      "ddbApiKey": "nM554lN9bKgwx2kPYfzFgC6VhucGdySa4rv1X8ehkq0c4Mcntdi1756509187153"
     }
   }
 }

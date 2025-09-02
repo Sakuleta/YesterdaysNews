@@ -20,6 +20,7 @@ export const COLORS = {
   textPrimary: '#002b36', // Solarized Base01
   textSecondary: '#586e75', // Solarized Base0
   textTertiary: '#93a1a1', // Solarized Base1
+  textDisabled: '#cbd3d3', // Disabled text color
   textInverse: '#fdf6e3',
 
   // Accent colors
@@ -343,7 +344,7 @@ export const API = {
   retryAttempts: 3,
   cacheExpiryHours: 24,
   maxEventsPerDay: 20,
-  // Optional: backend proxy base URL for API Ninjas to keep key private
+  // Optional: backend proxy base URL for external APIs to keep keys private
   proxyBaseUrl: '',
   // Backoff configuration (ms)
   backoffInitial: 400,

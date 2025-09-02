@@ -11,7 +11,7 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 /**
  * Custom hook for FlatList configuration and rendering logic
  */
-export const useFlatListConfig = (events, loading, error, languageChanging, refreshing, loadEvents, handleRefresh) => {
+export const useFlatListConfig = (events, loading, error, languageChanging, refreshing, loadEvents, handleRefresh, isLoading) => {
   const { i18n } = useTranslation();
 
   /**
@@ -46,14 +46,17 @@ export const useFlatListConfig = (events, loading, error, languageChanging, refr
    */
   const renderListHeader = useCallback(() => (
     <>
-      <NewspaperMasthead onLanguageChange={(newLang) => {
-        // Language changed, reload events
-        console.log('Language changing to:', newLang);
-        // This will trigger the language change effect in useEventsData
-      }} />
+      <NewspaperMasthead
+        onLanguageChange={(newLang) => {
+          // Language changed, reload events
+          console.log('Language changing to:', newLang);
+          // This will trigger the language change effect in useEventsData
+        }}
+        isLoading={isLoading}
+      />
       <DateHeader eventsCount={events.length} refreshTrigger={refreshing ? Date.now() : 0} />
     </>
-  ), [events.length, refreshing]);
+  ), [events.length, refreshing, isLoading]);
 
   /**
    * Render list empty component
@@ -93,7 +96,6 @@ export const useFlatListConfig = (events, loading, error, languageChanging, refr
    * Memoized FlatList configuration
    */
   const flatListConfig = useMemo(() => ({
-    key: `list-${i18n.language}-${languageChanging ? 'changing' : 'ready'}`,
     data: languageChanging ? [] : events,
     keyExtractor,
     shouldItemUpdate,
@@ -104,7 +106,6 @@ export const useFlatListConfig = (events, loading, error, languageChanging, refr
     onRefresh: handleRefresh,
     contentContainerStyle: styles.listContent
   }), [
-    i18n.language,
     languageChanging,
     events,
     keyExtractor,

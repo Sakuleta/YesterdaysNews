@@ -5,7 +5,7 @@
  * @property {string} title - Short title of the event
  * @property {string} description - Full description of the event
  * @property {string} category - Category of the event (event, birth, death, war, discovery, disaster, politics)
- * @property {string} source - Source of the event data (Wikipedia, API Ninjas, MuffinLabs)
+ * @property {string} source - Source of the event data (Wikipedia, Deutsche Digitale Bibliothek)
  * @property {Array<Link>} [links] - Related links for the event
  */
 
@@ -57,7 +57,7 @@ export const EVENT_CATEGORIES = {
   },
   death: {
     name: 'Death',
-    icon: 'person_remove',
+    icon: 'person_off',
     color: '#EF4444'
   },
   war: {
@@ -77,7 +77,7 @@ export const EVENT_CATEGORIES = {
   },
   politics: {
     name: 'Politics',
-    icon: 'account_balance',
+    icon: 'gavel',
     color: '#3B82F6'
   }
 };

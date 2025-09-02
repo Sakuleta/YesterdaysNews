@@ -11,8 +11,7 @@ import i18n from '../i18n';
  */
 class ApiIntegrations {
   static WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org/api/rest_v1/feed/onthisday';
-  static API_NINJAS_BASE_URL = 'https://api.api-ninjas.com/v1/historicalevents';
-  static MUFFINLABS_BASE_URL = 'https://history.muffinlabs.com/date';
+  static DDB_BASE_URL = 'https://api.deutsche-digitale-bibliothek.de/search';
   static currentEpoch = 0; // Increment on language change to invalidate old responses
   static abortControllers = new Map(); // cacheKey -> AbortController
 
@@ -36,7 +35,7 @@ class ApiIntegrations {
       const currentLang = forceLang || i18n.language || 'en';
       const langMap = {
         'tr': 'tr', 'es': 'es', 'fr': 'fr', 'de': 'de', 'it': 'it',
-        'pt': 'pt', 'ru': 'ru', 'ar': 'ar', 'zh': 'zh', 'ja': 'ja'
+        'pt': 'pt', 'ru': 'ru'
       };
       const wikiLang = langMap[currentLang] || 'en';
 
@@ -97,99 +96,91 @@ class ApiIntegrations {
   }
 
   /**
-   * Fetch events from API Ninjas Historical Events API
-   * @param {string} month
-   * @param {string} day
+   * Fetch events from Deutsche Digitale Bibliothek API
+   * @param {string} month - Month (01-12)
+   * @param {string} day - Day (01-31)
    * @returns {Promise<Array>}
    */
-  static async fetchApiNinjasEvents(month, day) {
+  static async fetchDeutscheDigitaleBibliothekEvents(month, day) {
     try {
-      // Get current language for localized news
-      const currentLang = i18n.language || 'en';
+      // Get current language for localized content
+      const currentLang = i18n.language || 'de';
 
-      // Prefer backend proxy if provided to keep the key private
-      const base = (API?.proxyBaseUrl && API.proxyBaseUrl.trim().length > 0)
-        ? `${API.proxyBaseUrl.replace(/\/$/, '')}/historicalevents`
-        : this.API_NINJAS_BASE_URL;
+      // Create date query for "on this day" - try different approaches
+      // First try simple query without date filter to test basic connectivity
+      const dateQuery = `subtitle:*${month}${day}*`; // Search for MMDD pattern in subtitle
 
-      // Add language parameter for better localization
-      const url = `${base}?month=${month}&day=${day}&language=${currentLang}`;
-      if (__DEV__) console.log('Fetching from API Ninjas:', url);
+      // Add minimal search parameters to test basic functionality
+      const params = new URLSearchParams({
+        query: dateQuery,
+        rows: '10', // Smaller number for testing
+        // Removed facet and sort for now to test basic connectivity
+      });
 
-      const usingProxy = base !== this.API_NINJAS_BASE_URL;
-      const envKey = process.env.EXPO_PUBLIC_API_NINJAS_KEY || process.env.API_NINJAS_KEY;
-      const configKey = Constants?.expoConfig?.extra?.apiNinjasKey || Constants?.manifest?.extra?.apiNinjasKey;
-      const apiKey = usingProxy ? '' : (envKey || configKey || '');
+      // Check for API key in environment variables or constants
+      const apiKey = process.env.EXPO_PUBLIC_DDB_API_KEY || process.env.DDB_API_KEY ||
+                    Constants?.expoConfig?.extra?.ddbApiKey || Constants?.manifest?.extra?.ddbApiKey;
 
-      const response = await this.withRetry(() => axios.get(url, {
-        timeout: API?.timeout || 8000, // Reduced timeout for faster response
-        headers: {
-          'User-Agent': 'YesterdaysNews/1.0 (https://example.com/contact)',
-          'Accept': 'application/json',
-          ...(apiKey ? { 'X-Api-Key': apiKey } : {})
+      if (__DEV__) {
+        console.log('DDB API Key found:', !!apiKey);
+        if (apiKey) console.log('API Key length:', apiKey.length);
+      }
+
+      // Build URL with API key as query parameter (required by DDB API)
+      let url = `${this.DDB_BASE_URL}?${params.toString()}`;
+      if (apiKey) {
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('oauth_consumer_key', apiKey);
+        url = urlObj.toString();
+      }
+
+      if (__DEV__) console.log('Fetching from Deutsche Digitale Bibliothek API:', url);
+
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (compatible; YesterdaysNews/1.0)',
+        'Accept': 'application/json',
+        'Accept-Language': 'de,en-US;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache'
+      };
+
+      // Try without withRetry first to debug the issue
+      if (__DEV__) console.log('Making direct axios request...');
+      const response = await axios.get(url, {
+        timeout: 10000, // Longer timeout
+        headers: headers,
+        validateStatus: function (status) {
+          return status < 500; // Accept 4xx errors but not 5xx
         }
-      }));
+      });
 
-      if (!response.data || !Array.isArray(response.data)) {
-        console.error('Invalid API Ninjas response format');
+      if (!response.data || !response.data.results || !Array.isArray(response.data.results)) {
+        console.error('Invalid Deutsche Digitale Bibliothek API response format');
         return [];
       }
 
-      console.log(`API Ninjas returned ${response.data.length} events`);
-      return this.transformApiNinjasEvents(response.data);
+      console.log(`Deutsche Digitale Bibliothek API returned ${response.data.results.length} results`);
+      return this.transformDeutscheDigitaleBibliothekEvents(response.data.results);
     } catch (error) {
-      console.error('Error fetching from API Ninjas:', error.message);
+      console.error('Error fetching from Deutsche Digitale Bibliothek API:', error.message);
 
       if (error.response) {
-        if (error.response.status === 400) {
-          console.error('API Ninjas bad request - check API key and parameters');
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+        if (error.response.data) {
+          console.error('Response data:', error.response.data);
+        }
+
+        if (error.response.status === 403) {
+          console.error('Deutsche Digitale Bibliothek API access forbidden - check API key');
         } else if (error.response.status === 429) {
-          console.error('API Ninjas rate limit exceeded');
+          console.error('Deutsche Digitale Bibliothek API rate limit exceeded');
         } else if (error.response.status >= 500) {
-          console.error('API Ninjas server error');
+          console.error('Deutsche Digitale Bibliothek API server error');
         }
-      }
-
-      return []; // Return empty array on error
-    }
-  }
-
-  /**
-   * Fetch events from MuffinLabs Today in History API
-   * @param {string} month
-   * @param {string} day
-   * @returns {Promise<Array>}
-   */
-  static async fetchMuffinLabsEvents(month, day) {
-    try {
-      // MuffinLabs API format: /date/{month}/{day}
-      const url = `${this.MUFFINLABS_BASE_URL}/${month}/${day}`;
-      if (__DEV__) console.log('Fetching from MuffinLabs API:', url);
-
-      const response = await this.withRetry(() => axios.get(url, {
-        timeout: API?.timeout || 8000, // Reduced timeout for faster response
-        headers: {
-          'User-Agent': 'YesterdaysNews/1.0 (https://example.com/contact)',
-          'Accept': 'application/json'
-        }
-      }));
-
-      if (!response.data || !response.data.data || !response.data.data.Events) {
-        console.error('Invalid MuffinLabs API response format');
-        return [];
-      }
-
-      console.log(`MuffinLabs API returned ${response.data.data.Events.length} events`);
-      return this.transformMuffinLabsEvents(response.data.data.Events);
-    } catch (error) {
-      console.error('Error fetching from MuffinLabs API:', error.message);
-
-      if (error.response) {
-        if (error.response.status === 429) {
-          console.error('MuffinLabs API rate limit exceeded');
-        } else if (error.response.status >= 500) {
-          console.error('MuffinLabs API server error');
-        }
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Request setup error:', error.message);
       }
 
       return []; // Return empty array on error
@@ -202,6 +193,14 @@ class ApiIntegrations {
    * @returns {Array} Transformed events
    */
   static transformWikipediaEvents(events) {
+    // Get current language to determine Wikipedia domain
+    const currentLang = i18n.language || 'en';
+    const langMap = {
+      'tr': 'tr', 'es': 'es', 'fr': 'fr', 'de': 'de', 'it': 'it',
+      'pt': 'pt', 'ru': 'ru'
+    };
+    const wikiLang = langMap[currentLang] || 'en';
+
     return events
       .filter(event => event.year && event.text)
       .map((event, index) => ({
@@ -212,54 +211,91 @@ class ApiIntegrations {
         category: EventProcessor.categorizeEvent(event.text),
         links: event.pages ? event.pages.map(page => ({
           title: page.title,
-          url: `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`
+          url: `https://${wikiLang}.wikipedia.org/wiki/${encodeURIComponent(page.title)}`
         })) : [],
         source: 'Wikipedia'
       }))
       .filter(event => !isNaN(event.year)) // Filter out events with invalid years
-      .slice(0, 60); // Get more events from Wikipedia (increased from default)
+      // No limit - show all available Wikipedia events
   }
 
   /**
-   * Transform raw API Ninjas events into app format
-   * @param {Array} events - Raw events from API
+   * Transform raw Deutsche Digitale Bibliothek events into app format
+   * @param {Array} results - Raw results from DDB API
    * @returns {Array} Transformed events
    */
-  static transformApiNinjasEvents(events) {
-    return events
-      .filter(event => event.year && event.event)
-      .map((event, index) => ({
-        id: `api-ninjas-${event.year}-${event.event.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '')}-${index}`, // Added index for uniqueness
-        year: parseInt(event.year, 10),
-        title: EventProcessor.extractTitle(event.event),
-        description: event.event,
-        category: EventProcessor.categorizeEvent(event.event),
-        links: [],
-        source: 'API Ninjas'
-      }))
-      .filter(event => !isNaN(event.year)) // Filter out events with invalid years
-      .slice(0, 60); // Get more events from API Ninjas
-  }
+  static transformDeutscheDigitaleBibliothekEvents(results) {
+    if (__DEV__) {
+      console.log('DDB Transform input:', results?.length || 0, 'results');
+      if (results[0] && results[0].docs && results[0].docs[0]) {
+        console.log('Sample doc fields:', Object.keys(results[0].docs[0]));
+      }
+    }
 
-  /**
-   * Transform raw MuffinLabs events into app format
-   * @param {Array} events - Raw events from API
-   * @returns {Array} Transformed events
-   */
-  static transformMuffinLabsEvents(events) {
-    return events
-      .filter(event => event.year && event.text)
-      .map((event, index) => ({
-        id: `muffinlabs-${event.year}-${event.text.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '')}-${index}`, // Added index for uniqueness
-        year: parseInt(event.year, 10),
-        title: EventProcessor.extractTitle(event.text),
-        description: event.text,
-        category: EventProcessor.categorizeEvent(event.text),
-        links: [],
-        source: 'MuffinLabs'
-      }))
-      .filter(event => !isNaN(event.year)) // Filter out events with invalid years
-      .slice(0, 60); // Get more events from MuffinLabs
+    return results
+      .filter(result => result && result.docs && result.docs.length > 0)
+      .map((result, index) => {
+        const doc = result.docs[0]; // Take the first document from each result
+
+        // Extract year from subtitle field (DDB stores date info in subtitle)
+        let year = null;
+        if (__DEV__) {
+          console.log('Available fields in doc:', Object.keys(doc));
+          console.log('Title field:', doc.title);
+          console.log('Subtitle field:', doc.subtitle);
+        }
+
+        // Try to extract year from subtitle first
+        if (doc.subtitle && typeof doc.subtitle === 'string') {
+          // Look for 4-digit year patterns in subtitle
+          const yearMatches = doc.subtitle.match(/\b(1[0-9]{3}|2[0-9]{3})\b/g);
+          if (yearMatches && yearMatches.length > 0) {
+            // Take the first year found
+            year = parseInt(yearMatches[0], 10);
+            if (__DEV__) console.log('Extracted year from subtitle:', year);
+          }
+        }
+
+        // Fallback to time field if subtitle doesn't have year
+        if (!year && doc.time && Array.isArray(doc.time)) {
+          const timeValue = doc.time[0];
+          if (typeof timeValue === 'string') {
+            const yearMatch = timeValue.match(/^(\d{4})/);
+            if (yearMatch) {
+              year = parseInt(yearMatch[1], 10);
+            }
+          } else if (typeof timeValue === 'number') {
+            year = timeValue;
+          }
+        }
+
+        if (__DEV__) console.log('Extracted year:', year);
+
+        // Extract title and description
+        const title = doc.title ? doc.title[0] : 'Unbekannter Titel';
+        const description = doc.description ? doc.description[0] : doc.title ? doc.title[0] : 'Keine Beschreibung verfügbar';
+
+        // Create links if available
+        const links = [];
+        if (doc.id && doc.id[0]) {
+          links.push({
+            title: title,
+            url: `https://www.deutsche-digitale-bibliothek.de/item/${doc.id[0]}`
+          });
+        }
+
+        return {
+          id: `ddb-${doc.id ? doc.id[0] : `unknown-${index}`}`,
+          year: year || 0, // Use 0 if no year found, will be filtered out later
+          title: EventProcessor.extractTitle(title),
+          description: description,
+          category: EventProcessor.categorizeEvent(description),
+          links: links,
+          source: 'Deutsche Digitale Bibliothek'
+        };
+      })
+      .filter(event => event.year && !isNaN(event.year) && event.year > 0) // Filter out events without valid years
+      // No limit - show all available Deutsche Digitale Bibliothek events
   }
 
   /**
@@ -291,3 +327,4 @@ class ApiIntegrations {
 }
 
 export default ApiIntegrations;
+

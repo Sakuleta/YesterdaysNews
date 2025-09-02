@@ -9,17 +9,17 @@ class EventProcessor {
    * - Caps dense decades so one era doesn't dominate
    * - Ranks events by an interest score (recency, category, richness, source diversity)
    * @param {Array} localizedEvents - Events from localized sources
-   * @param {Array} apiNinjasEvents - Events from API Ninjas
-   * @param {Array} muffinLabsEvents - Events from MuffinLabs
+   * @param {Array} ddbEvents - Events from Deutsche Digitale Bibliothek
+   * @param {Array} additionalEvents - Additional events from other sources
    * @returns {Array} Curated events list
    */
-  static combineAndDeduplicateEvents(localizedEvents, apiNinjasEvents, muffinLabsEvents) {
+  static combineAndDeduplicateEvents(localizedEvents, ddbEvents, additionalEvents) {
     try {
-      const LIMIT = 60;
+      // Remove overall limit - show all available events
       const PER_DECADE_CAP = 3; // avoid clusters from the same decade
 
       // Filter out any null or undefined sources
-      const validSources = [localizedEvents, apiNinjasEvents, muffinLabsEvents].filter(source => Array.isArray(source));
+      const validSources = [localizedEvents, ddbEvents, additionalEvents].filter(source => Array.isArray(source));
       const allEvents = [].concat(...validSources);
 
       // Filter out any invalid events
@@ -72,7 +72,7 @@ class EventProcessor {
       }
       for (const [, list] of byEra) list.sort((a, b) => b._score - a._score);
 
-      const targets = this.getEraTargets(LIMIT, byEra);
+      const targets = this.getEraTargets(1000, byEra); // Use high number instead of limit
 
       // Select with per-decade cap inside each era
       const selected = [];
@@ -81,7 +81,7 @@ class EventProcessor {
       const pickFromEra = (era, count) => {
         const list = byEra.get(era) || [];
         for (const ev of list) {
-          if (selected.length >= LIMIT) break;
+          // No overall limit - continue until era target is met
           if (count <= 0) break;
           const decade = Math.floor(ev.year / 10) * 10;
           const dKey = `${era}-${decade}`;
@@ -104,22 +104,21 @@ class EventProcessor {
       }
 
       // Secondary pass: fill remaining slots by global score with decade cap
-      if (selected.length < LIMIT) {
-        const remaining = scored
-          .filter(e => !selected.includes(e))
-          .sort((a, b) => b._score - a._score);
-        for (const ev of remaining) {
-          if (selected.length >= LIMIT) break;
-          const era = this.getEraForYear(ev.year);
-          const decade = Math.floor(ev.year / 10) * 10;
-          const dKey = `${era}-${decade}`;
-          const dCount = decadeCounters.get(dKey) || 0;
-          if (dCount >= PER_DECADE_CAP) continue;
-          const already = selected.find(s => s.year === ev.year && this.isSimilarTitle(s.title.toLowerCase(), ev.title.toLowerCase()));
-          if (already) continue;
-          selected.push(ev);
-          decadeCounters.set(dKey, dCount + 1);
-        }
+      // No limit check - continue until all events are processed
+      const remaining = scored
+        .filter(e => !selected.includes(e))
+        .sort((a, b) => b._score - a._score);
+      for (const ev of remaining) {
+        // No limit check - continue processing all remaining events
+        const era = this.getEraForYear(ev.year);
+        const decade = Math.floor(ev.year / 10) * 10;
+        const dKey = `${era}-${decade}`;
+        const dCount = decadeCounters.get(dKey) || 0;
+        if (dCount >= PER_DECADE_CAP) continue;
+        const already = selected.find(s => s.year === ev.year && this.isSimilarTitle(s.title.toLowerCase(), ev.title.toLowerCase()));
+        if (already) continue;
+        selected.push(ev);
+        decadeCounters.set(dKey, dCount + 1);
       }
 
       // Final ordering: newest first; tie-break on score then title
@@ -168,7 +167,7 @@ class EventProcessor {
     const descriptionScore = Math.min(((event.description || '').length) / 280, 1); // up to 1
     const linksScore = Math.min((event.links || []).length / 3, 1); // up to 1
 
-    const sourceBonus = event.source === 'API Ninjas' ? 0.15 : event.source === 'MuffinLabs' ? 0.1 : 0;
+    const sourceBonus = event.source === 'Deutsche Digitale Bibliothek' ? 0.1 : 0;
 
     // Weighted sum, final between ~0 and ~4
     return (recencyScore * 0.6) + (categoryScore * 1.2) + (descriptionScore * 0.6) + (linksScore * 0.3) + sourceBonus;
@@ -190,7 +189,7 @@ class EventProcessor {
    * Decide target counts per era based on availability and a base template
    */
   static getEraTargets(limit, byEra) {
-    // Base template totals ~60
+    // Base template for balanced era distribution (can scale for unlimited events)
     const base = new Map([
       ['ancient', 5],
       ['medieval', 8],
@@ -291,7 +290,7 @@ class EventProcessor {
   }
 
   /**
-   * Categorize event based on text content
+   * Categorize event based on text content with multi-language support
    * @param {string} text - Event text
    * @returns {string} Event category
    */
@@ -303,20 +302,133 @@ class EventProcessor {
 
     const lowerText = text.toLowerCase();
 
-    if (lowerText.includes('born') || lowerText.includes('birth')) {
-      return 'birth';
-    } else if (lowerText.includes('died') || lowerText.includes('death') || lowerText.includes('executed')) {
-      return 'death';
-    } else if (lowerText.includes('war') || lowerText.includes('battle') || lowerText.includes('invasion')) {
-      return 'war';
-    } else if (lowerText.includes('discover') || lowerText.includes('invention') || lowerText.includes('patent')) {
-      return 'discovery';
-    } else if (lowerText.includes('earthquake') || lowerText.includes('volcano') || lowerText.includes('disaster')) {
-      return 'disaster';
-    } else if (lowerText.includes('king') || lowerText.includes('queen') || lowerText.includes('emperor') || lowerText.includes('crowned')) {
-      return 'politics';
-    } else if (lowerText.includes('treaty') || lowerText.includes('independence') || lowerText.includes('revolution')) {
-      return 'politics';
+    // Multi-language keywords for categorization
+    const keywords = {
+      birth: [
+        // English
+        'born', 'birth',
+        // Turkish
+        'doğan', 'doğum', 'dünyaya gelen',
+        // German
+        'geboren', 'geburt',
+        // Spanish
+        'nacido', 'nacimiento', 'nacida',
+        // French
+        'né', 'née', 'naissance',
+        // Italian
+        'nato', 'nascita', 'nata',
+        // Portuguese
+        'nascido', 'nascimento', 'nasceu',
+        // Russian
+        'родился', 'родилась', 'рождение'
+      ],
+      death: [
+        // English
+        'died', 'death', 'executed', 'killed',
+        // Turkish
+        'öldü', 'ölüm', 'öldürüldü', 'idam edildi',
+        // German
+        'starb', 'tod', 'hingerichtet', 'ermordet',
+        // Spanish
+        'murió', 'muerte', 'ejecutado', 'asesinado',
+        // French
+        'mort', 'décès', 'exécuté', 'assassiné',
+        // Italian
+        'morto', 'morte', 'eseguito', 'ucciso',
+        // Portuguese
+        'morreu', 'morte', 'executado', 'assassinado',
+        // Russian
+        'умер', 'смерть', 'казнен', 'убит'
+      ],
+      war: [
+        // English
+        'war', 'battle', 'invasion', 'siege', 'conquest',
+        // Turkish
+        'savaş', 'muharebe', 'işgal', 'kuşatma', 'fetih',
+        // German
+        'krieg', 'schlacht', 'invasion', 'belagerung', 'eroberung',
+        // Spanish
+        'guerra', 'batalla', 'invasión', 'asedio', 'conquista',
+        // French
+        'guerre', 'bataille', 'invasion', 'siège', 'conquête',
+        // Italian
+        'guerra', 'battaglia', 'invasione', 'assedio', 'conquista',
+        // Portuguese
+        'guerra', 'batalha', 'invasão', 'cerco', 'conquista',
+        // Russian
+        'война', 'битва', 'вторжение', 'осада', 'завоевание'
+      ],
+      discovery: [
+        // English
+        'discover', 'invention', 'patent', 'found', 'exploration',
+        // Turkish
+        'keşif', 'icat', 'patent', 'buluş', 'keşfetmek',
+        // German
+        'entdeckung', 'erfindung', 'patent', 'entdecken', 'erforschen',
+        // Spanish
+        'descubrimiento', 'invención', 'patente', 'descubrir', 'exploración',
+        // French
+        'découverte', 'invention', 'brevet', 'découvrir', 'exploration',
+        // Italian
+        'scoperta', 'invenzione', 'brevetto', 'scoprire', 'esplorazione',
+        // Portuguese
+        'descoberta', 'invenção', 'patente', 'descobrir', 'exploração',
+        // Russian
+        'открытие', 'изобретение', 'патент', 'открыть', 'исследование'
+      ],
+      disaster: [
+        // English
+        'earthquake', 'volcano', 'disaster', 'flood', 'fire', 'storm',
+        // Turkish
+        'deprem', 'volkan', 'felaket', 'sel', 'yangın', 'fırtına',
+        // German
+        'erdbeben', 'vulkanausbruch', 'katastrophe', 'überschwemmung', 'feuer', 'sturm',
+        // Spanish
+        'terremoto', 'volcán', 'desastre', 'inundación', 'incendio', 'tormenta',
+        // French
+        'séisme', 'éruption', 'catastrophe', 'inondation', 'incendie', 'tempête',
+        // Italian
+        'terremoto', 'eruzione', 'disastro', 'alluvione', 'incendio', 'tempesta',
+        // Portuguese
+        'terremoto', 'vulcão', 'desastre', 'inundação', 'incêndio', 'tempestade',
+        // Russian
+        'землетрясение', 'извержение', 'катастрофа', 'наводнение', 'пожар', 'шторм'
+      ],
+      politics: [
+        // English
+        'king', 'queen', 'emperor', 'crowned', 'treaty', 'independence', 'revolution',
+        'president', 'election', 'government', 'coup', 'assassination',
+        // Turkish
+        'kral', 'kraliçe', 'imparator', 'taç giydi', 'antlaşma', 'bağımsızlık', 'devrim',
+        'başkan', 'seçim', 'hükümet', 'darbe', 'suikast',
+        // German
+        'könig', 'königin', 'kaiser', 'gekrönt', 'vertrag', 'unabhängigkeit', 'revolution',
+        'präsident', 'wahl', 'regierung', 'putsch', 'attentat',
+        // Spanish
+        'rey', 'reina', 'emperador', 'coronado', 'tratado', 'independencia', 'revolución',
+        'presidente', 'elección', 'gobierno', 'golpe', 'asesinato',
+        // French
+        'roi', 'reine', 'empereur', 'couronné', 'traité', 'indépendance', 'révolution',
+        'président', 'élection', 'gouvernement', 'coup', 'assassinat',
+        // Italian
+        're', 'regina', 'imperatore', 'incoronato', 'trattato', 'indipendenza', 'rivoluzione',
+        'presidente', 'elezione', 'governo', 'colpo', 'assassinio',
+        // Portuguese
+        'rei', 'rainha', 'imperador', 'coroado', 'tratado', 'independência', 'revolução',
+        'presidente', 'eleição', 'governo', 'golpe', 'assassinato',
+        // Russian
+        'король', 'королева', 'император', 'коронован', 'договор', 'независимость', 'революция',
+        'президент', 'выборы', 'правительство', 'переворот', 'убийство'
+      ]
+    };
+
+    // Check each category
+    for (const [category, words] of Object.entries(keywords)) {
+      for (const word of words) {
+        if (lowerText.includes(word)) {
+          return category;
+        }
+      }
     }
 
     return 'event';

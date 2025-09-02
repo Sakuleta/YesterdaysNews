@@ -1,0 +1,9 @@
+---
+description: Genel kurallar
+globs:
+alwaysApply: true
+---
+- Herhangi bir dilde değişiklik veya ekleme yapıldığı zaman, tüm dillerin json dosyasını da düzeltmen lazım.
+- Herhangi bir dosya yazdığın zaman dosyanın modüler olmasına dikkat et uzun dosya istenmiyor.
+- Herhangi bir özellik/ekran/dizayn/dosya ekleyeceğin zaman uygulamanın ui/ux dizaynını bozmayacak şekilde olması lazım. Renklerin eşleşmesi lazım.
+- Uygulamayı hiçbir zaman çalıştırma.

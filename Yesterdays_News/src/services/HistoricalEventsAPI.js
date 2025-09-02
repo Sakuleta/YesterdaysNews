@@ -218,14 +218,16 @@ class HistoricalEventsAPI {
     try {
       const currentLang = i18n.language || 'en';
 
-      // Temporarily disable ja/ar/zh completely
-      if (['ja', 'ar', 'zh'].includes(currentLang)) {
-        if (__DEV__) console.log(`Language ${currentLang} disabled. Falling back to en.`);
-        return [];
-      }
-
       // Try Wikipedia API first
       let events = await ApiIntegrations.fetchWikipediaEvents(month, day, currentEpoch);
+
+      // Also try Deutsche Digitale Bibliothek for German language
+      let ddbEvents = [];
+      if (currentLang === 'de') {
+        if (__DEV__) console.log('Trying Deutsche Digitale Bibliothek API for German language');
+        ddbEvents = await ApiIntegrations.fetchDeutscheDigitaleBibliothekEvents(month, day);
+        if (__DEV__) console.log(`DDB API returned ${ddbEvents.length} events`);
+      }
 
       // If Wikipedia fails or returns no events, try fallback sources
       if (!events || events.length === 0) {
@@ -241,19 +243,22 @@ class HistoricalEventsAPI {
           }
         }
 
-        // Try API Ninjas and MuffinLabs as additional fallbacks
-        if (__DEV__) console.log('Trying API Ninjas and MuffinLabs as fallbacks');
-        const [apiNinjasEvents, muffinLabsEvents] = await Promise.all([
-          ApiIntegrations.fetchApiNinjasEvents(month, day),
-          ApiIntegrations.fetchMuffinLabsEvents(month, day)
-        ]);
+        // Try Deutsche Digitale Bibliothek as additional fallback
+        if (__DEV__) console.log('Trying Deutsche Digitale Bibliothek as fallback');
+        const ddbEvents = await ApiIntegrations.fetchDeutscheDigitaleBibliothekEvents(month, day);
 
-        // Combine fallback events
-        const allFallbackEvents = [...(apiNinjasEvents || []), ...(muffinLabsEvents || [])];
-        if (allFallbackEvents.length > 0) {
-          if (__DEV__) console.log(`Fallback sources returned ${allFallbackEvents.length} events`);
-          return allFallbackEvents;
+        // Use DDB events as fallback
+        if (ddbEvents && ddbEvents.length > 0) {
+          if (__DEV__) console.log(`DDB fallback returned ${ddbEvents.length} events`);
+          return ddbEvents;
         }
+
+      }
+
+      // Combine Wikipedia and DDB events if DDB returned any
+      if (ddbEvents && ddbEvents.length > 0) {
+        events = [...(events || []), ...ddbEvents];
+        if (__DEV__) console.log(`Combined Wikipedia + DDB: ${events.length} total events`);
       }
 
       return events || [];
@@ -284,21 +289,18 @@ class HistoricalEventsAPI {
     try {
       const currentLang = i18n.language || 'en';
 
-      // For all languages, try API Ninjas and MuffinLabs as fallbacks
-      if (__DEV__) console.log('Fetching fallback events from API Ninjas and MuffinLabs');
+      // For all languages, try Deutsche Digitale Bibliothek as fallback
+      if (__DEV__) console.log('Fetching fallback events from Deutsche Digitale Bibliothek');
 
-      const [apiNinjasEvents, muffinLabsEvents] = await Promise.all([
-        ApiIntegrations.fetchApiNinjasEvents(month, day),
-        ApiIntegrations.fetchMuffinLabsEvents(month, day)
-      ]);
+      const ddbEvents = await ApiIntegrations.fetchDeutscheDigitaleBibliothekEvents(month, day);
 
-      // Combine fallback events
-      const allEvents = [...(apiNinjasEvents || []), ...(muffinLabsEvents || [])];
-
-      if (allEvents.length > 0) {
-        if (__DEV__) console.log(`Fallback sources returned ${allEvents.length} events`);
-        return EventProcessor.combineAndDeduplicateEvents(allEvents, [], []);
+      // Use DDB events as fallback
+      if (ddbEvents && ddbEvents.length > 0) {
+        if (__DEV__) console.log(`DDB fallback returned ${ddbEvents.length} events`);
+        return EventProcessor.combineAndDeduplicateEvents(ddbEvents, [], []);
       }
+
+
 
       // If still no events, try English Wikipedia as ultimate fallback
       if (currentLang !== 'en') {

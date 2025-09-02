@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '../utils/constants';
 import DateUtils from '../services/DateUtils';
 import { cardStyles, textStyles } from '../styles/commonStyles';
@@ -10,6 +11,7 @@ import { cardStyles, textStyles } from '../styles/commonStyles';
  * Displays category icon, category name, and formatted year
  */
 const EventCardHeader = ({ year, category = 'event' }) => {
+  const { t } = useTranslation();
   const formattedYear = DateUtils.formatYear(year);
   const categoryIcon = CATEGORY_ICONS[category] || CATEGORY_ICONS.event;
   const categoryColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.event;
@@ -19,7 +21,7 @@ const EventCardHeader = ({ year, category = 'event' }) => {
       <View style={styles.categoryContainer}>
         <MaterialCommunityIcons name={categoryIcon} size={18} color={categoryColor} />
         <Text style={[textStyles.category, { color: categoryColor }]}>
-          {category}
+          {t(`categories.${category}`, { defaultValue: category })}
         </Text>
       </View>
       <Text style={textStyles.year}>{formattedYear}</Text>

@@ -50,10 +50,11 @@ class PerformanceMonitor {
       time: renderTime,
       timestamp: Date.now()
     });
-    
-    if (__DEV__) {
-      console.log(`🎨 ${componentName} rendered in ${renderTime}ms`);
-    }
+
+    // Removed console log for cleaner output
+    // if (__DEV__) {
+    //   console.log(`🎨 ${componentName} rendered in ${renderTime}ms`);
+    // }
   }
 
 

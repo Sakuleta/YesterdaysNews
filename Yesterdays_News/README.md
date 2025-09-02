@@ -8,7 +8,7 @@ A modern, elegantly architected React Native mobile application that displays hi
 - **📰 Vintage Newspaper Design**: Beautiful retro-style interface with smooth animations
 - **🌍 Multi-Language Support**: Available in 8 languages (Turkish, English, Spanish, French, German, Italian, Portuguese, Russian)
 - **🔍 Interactive Details**: Tap events to explore detailed information in elegant modal views
-- **🌐 Multiple Data Sources**: Aggregates from Wikipedia, API Ninjas, and MuffinLabs with smart failover
+- **🌐 Multiple Data Sources**: Aggregates from Wikipedia and Deutsche Digitale Bibliothek with smart failover
 - **⚡ Smart Caching**: Intelligent caching with automatic cache management and offline support
 - **🔄 Pull-to-Refresh**: Easy refresh with force refresh capability
 - **🛡️ Error Boundaries**: Comprehensive error handling with graceful degradation
@@ -141,11 +141,13 @@ This application follows modern software engineering principles with a clean, mo
 ### 📚 Layered Architecture
 
 #### 1. **Presentation Layer** (`src/components/`)
+
 - **UI Components**: Modular, reusable React components
 - **Custom Hooks**: Encapsulated stateful logic
 - **Styles**: Centralized style management
 
 #### 2. **Service Layer** (`src/services/`)
+
 - **ApiClient**: HTTP client with interceptors and error handling
 - **EventService**: High-level business operations for events
 - **CacheManager**: Intelligent caching with TTL and size limits
@@ -153,12 +155,14 @@ This application follows modern software engineering principles with a clean, mo
 - **CircuitBreaker**: Fault tolerance for external API calls
 
 #### 3. **Utility Layer** (`src/utils/`)
+
 - **errorHandling**: Centralized error handling and user-friendly messages
 - **validation**: Data validation and sanitization
 - **animations**: Reusable animation patterns
 - **constants**: Application-wide constants and configuration
 
 #### 4. **Type Definitions** (`src/types/`)
+
 - **Event.js**: Event-related type definitions and utilities
 - **ApiResponse.js**: API response types and validation
 - **UI.js**: UI component prop types and validation
@@ -173,12 +177,14 @@ This application follows modern software engineering principles with a clean, mo
 ### 📊 Key Components
 
 #### UI Components Library (`src/components/ui/`)
+
 - **Button**: Versatile button with variants (primary, secondary, outline, ghost)
 - **LoadingIndicator**: Multiple loading styles (spinner, pulse, dots)
 - **EmptyState**: Configurable empty state displays with presets
 - **ErrorBoundary**: React Error Boundary with fallback UI and retry options
 
 #### Custom Hooks (`src/hooks/`)
+
 - **useEventsData**: Events fetching, caching, and state management
 - **useModalManager**: Modal visibility and content management
 - **useModalAnimations**: Modal entrance/exit animations
@@ -187,6 +193,7 @@ This application follows modern software engineering principles with a clean, mo
 - **useScrollHandler**: Scroll performance optimization
 
 #### Service Layer (`src/services/`)
+
 - **ApiClient**: Axios-based HTTP client with request/response interceptors
 - **EventService**: High-level event operations (fetch, process, validate)
 - **CacheManager**: LRU cache with TTL, size limits, and compression
@@ -197,18 +204,21 @@ This application follows modern software engineering principles with a clean, mo
 ### 🔧 Technical Features
 
 #### Caching Strategy
+
 - **Multi-layer Caching**: Memory → AsyncStorage → Network
 - **TTL-based Expiry**: 24-hour cache expiry with sliding window
 - **Size Limits**: Automatic cleanup when cache size exceeds limits
 - **Compression**: Data compression for storage efficiency
 
 #### Error Handling
+
 - **Global Error Boundary**: Catches React errors with graceful degradation
 - **Network Error Recovery**: Automatic retry with exponential backoff
 - **User-Friendly Messages**: Contextual error messages for users
 - **Error Logging**: Structured error logging for debugging
 
 #### Performance Optimization
+
 - **Component Memoization**: React.memo for expensive components
 - **Virtual Scrolling**: Efficient rendering of large lists
 - **Lazy Loading**: On-demand loading of heavy components
@@ -302,7 +312,7 @@ Test coverage includes:
 - Android-specific optimizations
 - Google Play Store ready
 
-## 🔄 Data Flow
+## 🔄 Application Data Flow
 
 1. **App Launch**: Check current date, attempt to load cached events
 2. **API Call**: If cache miss or expired, fetch from Wikipedia API
@@ -346,14 +356,39 @@ Test coverage includes:
 
 ### Planned Features
 
+#### Core User Experience (Phase 1)
+
 - **Date Picker**: Browse events for any historical date
 - **Event Details**: Dedicated screen for full event information
+- **Search**: Search through historical events
+- **Categories Filter**: Filter events by type
+- **Themes**: Dark/light mode toggle
+
+#### Personalization & Engagement (Phase 2)
+
 - **Favorites**: Save interesting events for later
 - **Sharing**: Share events on social media
-- **Categories Filter**: Filter events by type
-- **Search**: Search through historical events
 - **Notifications**: Daily historical event notifications
-- **Themes**: Dark/light mode toggle
+- **User Profiles & Achievements**: Track stats and earn badges (e.g., "Renaissance Expert," "30-Day Streak")
+
+#### Enhanced Content (Phase 3)
+
+- **Historical Figures Database**: Tappable historical figures with bios and related events
+- **Home Screen Widget**: Native widget for iOS/Android to display daily events
+- **Music of the Day Integration**: Background music from the era of displayed events
+
+#### Advanced Features (Phase 4)
+
+- **Learning Paths**: Curated collections guiding users through specific topics (e.g., "The Industrial Revolution")
+- **Live History Feed**: Dynamic feed showing events from 50, 100, or 200 years ago "right now"
+- **Historical Tourism Planner**: Travel guide for discovering historical events and landmarks
+
+#### Immersive Experiences (Phase 5)
+
+- **Time Travel Feature**: Interactive date selection with immersive historical experience
+- **Personal Time Tunnel**: Personal memories alongside historical events
+- **Historical Connections Map**: Interactive network visualization of historical relationships
+- **Data Visualization**: Interactive charts, heat maps, and trend analysis
 
 ### Technical Improvements
 
