@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>İletişim | Yesterday's News</title>
+    <title>Contact | Yesterday's News</title>
+    <meta name="description" content="Contact information for Yesterday's News - email and phone for inquiries and support.">
     <style>
       :root { --bg:#0f172a; --card:#111827; --text:#e5e7eb; --muted:#94a3b8; --accent:#22c55e; }
       html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
@@ -12,22 +13,37 @@
       h1{margin:0 0 12px 0;font-size:28px}
       p{line-height:1.6;color:var(--muted)}
       .list{margin:16px 0;padding:0}
-      .list li{list-style:none;margin:10px 0}
+      .list li{list-style:none;margin:10px 0;padding:12px;background:rgba(34,197,94,.05);border-radius:6px;border-left:3px solid var(--accent)}
+      .list li strong{color:var(--text);display:block;margin-bottom:4px}
       a{color:var(--text);text-decoration:none;border-bottom:1px dotted var(--accent)}
       a:hover{color:var(--accent)}
-      .foot{margin-top:20px;font-size:14px}
+      .foot{margin-top:20px;font-size:14px;color:var(--muted)}
+      .lang-selector{margin-bottom:24px;text-align:right}
+      .lang-selector a{margin-left:12px;padding:4px 8px;border-radius:4px;border:1px solid var(--accent);opacity:.7}
+      .lang-selector a:hover{opacity:1}
+      .lang-selector a.active{border-color:#fbbf24;opacity:1;background:rgba(251,191,36,.1)}
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="card" role="region" aria-label="İletişim bilgileri">
-        <h1>İletişim</h1>
-        <p>Uygulama geliştiricisiyle aşağıdaki kanallardan iletişime geçebilirsiniz.</p>
+      <div class="lang-selector">
+        <a href="contact.html" class="active">English</a>
+        <a href="contact-tr.html">Türkçe</a>
+      </div>
+      <div class="card" role="region" aria-label="Contact information">
+        <h1>Contact Us</h1>
+        <p>You can reach the app developer through the following channels:</p>
         <ul class="list">
-          <li><strong>E‑posta:</strong> <a href="mailto:enesurasmdl@gmail.com">enesurasmdl@gmail.com</a></li>
-          <li><strong>Telefon:</strong> <a href="tel:+905056200047">+90 505 620 00 47</a></li>
+          <li>
+            <strong>Email</strong>
+            <a href="mailto:enesurasmdl@gmail.com">enesurasmdl@gmail.com</a>
+          </li>
+          <li>
+            <strong>Phone</strong>
+            <a href="tel:+905056200047">+90 505 620 00 47</a>
+          </li>
         </ul>
-        <p class="foot">Gizlilik Politikası: <a href="./privacy-policy.html">privacy-policy.html</a> · Hakkında: <a href="./about.html">about.html</a></p>
+        <p class="foot">Privacy Policy: <a href="./privacy-policy.html">privacy-policy.html</a> · About: <a href="./about.html">about.html</a></p>
       </div>
     </div>
   </body>
